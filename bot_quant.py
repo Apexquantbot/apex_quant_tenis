@@ -13,7 +13,7 @@ import requests
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 
-VERSION = "1.3"
+VERSION = "1.4"
 
 # ==============================================================================
 # APEX QUANT TENIS
@@ -1415,7 +1415,8 @@ def actualizar_ledger(alertas, partidos):
     ids = {p.get("id") for p in picks}
     nuevas = 0
     for a in alertas:
-        if not (a.get("finalizado") and a.get("acertado") is not None and a.get("cuotas_reales") and not a.get("push")):
+        # incluye también los pronósticos del modelo sin cuotas (con su cuota mínima)
+        if not (a.get("finalizado") and a.get("acertado") is not None and not a.get("push")):
             continue
         es_combi = bool(a.get("es_combinada"))
         pid = str(a.get("id_alerta")) if es_combi else f"TG_{a.get('id_alerta')}"
@@ -1426,12 +1427,13 @@ def actualizar_ledger(alertas, partidos):
                       "mercado": a.get("mercado"), "casa": a.get("casa"), "cuota": _a_float(a.get("cuota"), 2.0),
                       "stake": _a_float(a.get("stake"), 1.0), "ev": _a_float(a.get("ev"), 0.0),
                       "confirmado_stats": a.get("confirmado_stats"), "acertado": bool(a.get("acertado")),
+                      "solo_modelo": bool(a.get("solo_modelo")), "tipo": a.get("tipo_mercado"),
                       "marcador": a.get("marcador_final")})
         ids.add(pid)
         nuevas += 1
     for p in partidos:
         if not (p.get("estado") == "FINISHED" and p.get("acertado") is not None and p.get("tiene_pronostico")
-                and p.get("analizado") and not p.get("telegram_enviado") and not p.get("solo_modelo")):
+                and p.get("analizado") and not p.get("telegram_enviado") and not p.get("push")):
             continue
         pid = f"CTRL_{p.get('id')}_{p.get('tipo_mercado')}"
         if pid in ids:
@@ -1441,6 +1443,7 @@ def actualizar_ledger(alertas, partidos):
                       "mercado": p.get("mercado"), "casa": p.get("casa"), "cuota": _a_float(p.get("cuota"), 2.0),
                       "stake": _a_float(p.get("stake"), 1.0), "ev": _a_float(p.get("ev_numero"), 0.0),
                       "confirmado_stats": p.get("confirmado_stats"), "acertado": bool(p.get("acertado")),
+                      "solo_modelo": bool(p.get("solo_modelo")), "tipo": p.get("tipo_mercado"),
                       "marcador": p.get("marcador")})
         ids.add(pid)
         nuevas += 1

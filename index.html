@@ -176,7 +176,7 @@
     // ---------------------------------------------------------------
     const TG_CANAL = 'apex_quant_tenis';
     const WEB_URL = 'https://apexquantbot.github.io/apex_quant_tenis/';
-    const VERSION_WEB = '1.1';
+    const VERSION_WEB = '1.2';
 
     const SUPERFICIES = {
       Hard:  { txt: 'Pista dura', cls: 'bg-sky-500/15 text-sky-300 border-sky-500/30', ico: '🔵' },
@@ -311,7 +311,7 @@
       document.getElementById('countAlertas').innerText = `(${al.length})`;
 
       const rTG = rendimiento(al);
-      const control = state.partidos.filter(p => p.tiene_pronostico && !p.telegram_enviado && p.acertado !== null && p.acertado !== undefined && !p.solo_modelo)
+      const control = state.partidos.filter(p => p.tiene_pronostico && !p.telegram_enviado && p.acertado !== null && p.acertado !== undefined)
         .map(p => Object.assign({}, p, { finalizado: true }));
       const rCT = rendimiento(control);
       const rGL = { fin: rTG.fin + rCT.fin, ok: rTG.ok + rCT.ok, apostado: rTG.apostado + rCT.apostado, neto: rTG.neto + rCT.neto, curva: rTG.fin ? rTG.curva : rCT.curva };
@@ -505,19 +505,50 @@
     const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
     function resumenPicks(picks) { let n = 0, w = 0, st = 0, net = 0; picks.forEach(p => { n++; st += p.stake; if (p.acertado) { w++; net += p.stake * (p.cuota - 1); } else net -= p.stake; }); return { n, w, st, net, roi: st ? net / st * 100 : 0 }; }
     function serie(picks) { let acc = 0; const s = [0]; picks.slice().sort((a, b) => (a.fecha || '').localeCompare(b.fecha || '')).forEach(p => { acc += p.acertado ? p.stake * (p.cuota - 1) : -p.stake; s.push(Math.round(acc * 100) / 100); }); return s; }
+    const MESES_ABIERTOS = new Set();
+    let PICKS_HIST = [];
+    function toggleMes(m) { if (MESES_ABIERTOS.has(m)) MESES_ABIERTOS.delete(m); else MESES_ABIERTOS.add(m); renderizarHistorico(PICKS_HIST); }
+    const pctTxt = (r) => r.n ? Math.round(r.w / r.n * 100) + '%' : '--%';
+    const colorNum = (v) => v >= 0 ? 'text-emerald-400' : 'text-rose-400';
+    function rangoSemana(sk) {
+      const mt = /^(\d{4})-W(\d+)$/.exec(sk || ''); if (!mt) return '';
+      const y = +mt[1], w = +mt[2], ene4 = new Date(Date.UTC(y, 0, 4));
+      const lun = new Date(ene4); lun.setUTCDate(ene4.getUTCDate() - ((ene4.getUTCDay() + 6) % 7) + (w - 1) * 7);
+      const dom = new Date(lun); dom.setUTCDate(lun.getUTCDate() + 6);
+      const f = (d) => `${d.getUTCDate()}/${d.getUTCMonth() + 1}`;
+      return `${f(lun)}-${f(dom)}`;
+    }
     function renderizarHistorico(picks) {
+      PICKS_HIST = picks;
       const cont = document.getElementById('histContenido');
-      if (!picks.length) { cont.innerHTML = '<div class="p-6 text-center text-xs text-slate-400">Aún no hay picks liquidadas con cuotas reales. Se irá llenando a medida que terminen los partidos.</div>'; return; }
+      if (!picks.length) { cont.innerHTML = '<div class="p-6 text-center text-xs text-slate-400">Aún no hay pronósticos terminados. Se irá llenando a medida que terminen los partidos.</div>'; return; }
       const grupos = [['TG', 'Telegram', '#00f59b'], ['CONTROL', 'Control', '#94a3b8'], ['COMBI', 'Combinadas', '#a78bfa']].filter(g => g[0] !== 'COMBI' || picks.some(p => p.grupo === 'COMBI'));
-      const caja = (g) => { const r = resumenPicks(picks.filter(p => p.grupo === g[0])); return `<div class="p-3 rounded-2xl bg-brand-card border border-brand-border"><span class="text-[10px] font-bold uppercase block" style="color:${g[2]}">${g[1]}</span><span class="text-base font-extrabold font-mono block ${r.net >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${fmtU(r.net)}</span><span class="text-[10px] text-slate-400 font-mono block">ROI ${fmtPct(r.roi)} · ${r.w}V-${r.n - r.w}D</span></div>`; };
+      const caja = (g) => { const r = resumenPicks(picks.filter(p => p.grupo === g[0]));
+        return `<div class="p-3 rounded-2xl bg-brand-card border border-brand-border text-center"><span class="text-[10px] font-bold uppercase block" style="color:${g[2]}">${g[1]}</span>
+          <span class="text-lg font-extrabold font-mono block" style="color:${g[2]}">${pctTxt(r)}</span>
+          <span class="text-[10px] text-slate-400 font-mono block">${r.w}V - ${r.n - r.w}D</span>
+          <span class="text-[10px] font-mono block ${colorNum(r.net)}">${fmtU(r.net)} · ROI ${fmtPct(r.roi)}</span></div>`; };
+      const tipos = [['GANADOR', '🏆 Ganador'], ['JUEGOS', '🎯 Total juegos'], ['HANDICAP', '⚖️ Hándicap'], ['SETS', '🔢 Nº de sets'], ['SET', '🎾 Gana un set']]
+        .map(([k, t]) => [t, resumenPicks(picks.filter(p => p.grupo !== 'COMBI' && (p.tipo || 'GANADOR') === k))]).filter(x => x[1].n);
+      const origen = [['Con cuotas reales', resumenPicks(picks.filter(p => p.grupo !== 'COMBI' && !p.solo_modelo))], ['Solo modelo (cuota mínima)', resumenPicks(picks.filter(p => p.solo_modelo))]].filter(x => x[1].n);
+      const filaRes = ([t, r]) => `<tr class="border-t border-slate-800/80"><td class="py-1.5 text-slate-300">${t}</td><td class="text-right text-white font-bold">${pctTxt(r)}</td><td class="text-right text-slate-400">${r.w}V-${r.n - r.w}D</td><td class="text-right ${colorNum(r.net)}">${fmtU(r.net)}</td></tr>`;
       const lineas = grupos.map(g => `<path d="${trazo(serie(picks.filter(p => p.grupo === g[0])), 40)}" fill="none" stroke="${g[2]}" stroke-width="1.6" stroke-linecap="round"/>`).join('');
       const meses = {};
-      picks.forEach(p => { (meses[p.mes || 'S/D'] = meses[p.mes || 'S/D'] || []).push(p); });
-      const filas = Object.keys(meses).sort().reverse().map(m => { const [y, mm] = m.split('-'); return `<tr class="border-t border-slate-800/80"><td class="py-1.5 text-slate-300">${mm ? MESES[parseInt(mm, 10) - 1] + ' ' + y : m}</td>${grupos.map(g => { const r = resumenPicks(meses[m].filter(p => p.grupo === g[0])); return `<td class="text-right ${r.net >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${r.n ? fmtU(r.net) : '--'}<span class="text-slate-500"> (${r.n})</span></td>`; }).join('')}</tr>`; }).join('');
+      picks.forEach(p => { const m = p.mes || 'S/D', sk = p.semana_id || 'S/D'; const o = (meses[m] = meses[m] || { total: [], semanas: {} }); o.total.push(p); (o.semanas[sk] = o.semanas[sk] || []).push(p); });
+      const celda = (lista, g, cls) => { const r = resumenPicks(lista.filter(p => p.grupo === g[0])); return `<td class="${cls} text-right">${r.n ? `<span class="text-white font-bold">${pctTxt(r)}</span> <span class="${colorNum(r.net)}">${fmtU(r.net)}</span>` : '--'}<span class="text-slate-500"> (${r.n})</span></td>`; };
+      const filas = Object.keys(meses).sort().reverse().map(m => {
+        const [y, mm] = m.split('-'); const nombre = mm ? MESES[parseInt(mm, 10) - 1] + ' ' + y : m;
+        const sems = Object.keys(meses[m].semanas).sort().reverse(); const abierto = MESES_ABIERTOS.has(m);
+        const fs = abierto ? sems.map(sk => { const num = (/W(\d+)$/.exec(sk) || [])[1];
+          return `<tr class="text-[10px]"><td class="py-1 pl-4 text-slate-400 whitespace-nowrap">${num ? `S${parseInt(num, 10)} · ${rangoSemana(sk)}` : sk}</td>${grupos.map(g => celda(meses[m].semanas[sk], g, 'py-1')).join('')}</tr>`; }).join('') : '';
+        return `<tr onclick="toggleMes('${m}')" class="border-t border-slate-800/80 cursor-pointer select-none"><td class="py-1.5 text-slate-300 whitespace-nowrap"><span class="inline-block w-3 text-brand-primary text-[9px]">${abierto ? '▾' : '▸'}</span>${nombre}</td>${grupos.map(g => celda(meses[m].total, g, 'py-1.5')).join('')}</tr>${fs}`;
+      }).join('');
       cont.innerHTML = `<div class="grid grid-cols-${grupos.length} gap-2">${grupos.map(caja).join('')}</div>
         <div class="p-3 rounded-2xl bg-brand-card border border-brand-border"><span class="text-[10px] font-bold uppercase text-slate-400 block mb-1.5">Beneficio acumulado</span><div class="h-20 bg-slate-900/80 rounded-xl p-1"><svg class="w-full h-full overflow-visible" viewBox="0 0 100 40" preserveAspectRatio="none">${lineas}</svg></div></div>
-        <div class="p-3 rounded-2xl bg-brand-card border border-brand-border"><table class="w-full text-[11px] font-mono"><thead><tr class="text-[9px] uppercase text-slate-500"><th class="text-left">Mes</th>${grupos.map(g => `<th class="text-right">${g[1]}</th>`).join('')}</tr></thead><tbody>${filas}</tbody></table></div>
-        ${picks.length < 50 ? `<div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[10px] text-amber-300">Muestra pequeña (${picks.length} picks): con menos de ~50 picks el resultado es sobre todo azar.</div>` : ''}`;
+        <div class="p-3 rounded-2xl bg-brand-card border border-brand-border"><span class="text-[10px] font-bold uppercase text-slate-400 block mb-1.5">Por mes · toca un mes para ver sus semanas</span><table class="w-full text-[11px] font-mono"><thead><tr class="text-[9px] uppercase text-slate-500"><th class="text-left">Mes</th>${grupos.map(g => `<th class="text-right">${g[1]}</th>`).join('')}</tr></thead><tbody>${filas}</tbody></table></div>
+        <div class="p-3 rounded-2xl bg-brand-card border border-brand-border"><span class="text-[10px] font-bold uppercase text-slate-400 block mb-1.5">Por mercado y por origen</span><table class="w-full text-[11px] font-mono"><tbody>${tipos.map(filaRes).join('')}${origen.length ? '<tr><td colspan="4" class="pt-2"></td></tr>' + origen.map(filaRes).join('') : ''}</tbody></table></div>
+        ${picks.length < 50 ? `<div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[10px] text-amber-300">Muestra pequeña (${picks.length} pronósticos): con menos de ~50 el resultado es sobre todo azar.</div>` : ''}
+        <p class="text-[9px] text-slate-500 leading-relaxed">Incluye los pronósticos con cuotas reales y los del modelo sin cuotas (calculados con su cuota mínima, así que el beneficio real puede ser algo mayor). Las apuestas anuladas (retirada, walkover) no cuentan.</p>`;
     }
     async function abrirHistorico() {
       const m = document.getElementById('modalHist'); m.classList.remove('hidden'); m.classList.add('flex');
