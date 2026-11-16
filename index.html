@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Apex Quant Tenis</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0c1322">
+  <link rel="icon" type="image/png" href="icon-192.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+  <style>
+    body { background-color: #070e1d; color: #f1f5f9; font-family: 'Plus Jakarta Sans', sans-serif; -webkit-tap-highlight-color: transparent; }
+    .custom-scroll::-webkit-scrollbar { display: none; }
+    .custom-scroll { -ms-overflow-style: none; scrollbar-width: none; }
+    /* ---------- SPLASH ANIMADO ---------- */
+    #splash { position: fixed; inset: 0; z-index: 70; display: flex; flex-direction: column; align-items: center; justify-content: center; background: radial-gradient(circle at 50% 42%, #0c1a2e 0%, #070e1d 70%); transition: opacity .55s ease; }
+    #splash .sp-svg { width: 11rem; height: 11rem; overflow: visible; }
+    #splash .sp-title { margin-top: 1rem; color: #fff; font-weight: 800; font-size: 1.125rem; font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; opacity: 0; letter-spacing: .6em; animation: spTitle .9s .9s ease-out forwards; }
+    #splash .sp-bar { margin-top: 1.25rem; width: 7rem; height: .25rem; border-radius: 9999px; background: #1e293b; overflow: hidden; }
+    #splash .sp-ring { fill: none; stroke: #00f59b; stroke-opacity: .28; stroke-width: 3; stroke-dasharray: 540; stroke-dashoffset: 540; animation: spDraw 1.2s ease-out forwards; }
+    #splash .sp-orbit { transform-origin: 100px 100px; animation: spSpin 2.6s linear infinite; }
+    #splash .sp-tri { fill: none; stroke: url(#gSplash); stroke-width: 9; stroke-linejoin: round; stroke-linecap: round; stroke-dasharray: 320; stroke-dashoffset: 320; animation: spDraw 1.05s .3s ease-out forwards; }
+    #splash .sp-dot { fill: #00f59b; opacity: 0; transform-origin: 100px 108px; animation: spFade .35s 1.1s forwards, spPulse 1.3s 1.45s ease-in-out infinite; }
+    #splash .sp-glow { animation: spGlow 2.2s ease-in-out infinite; }
+    #splash .sp-bar span { display: block; height: 100%; width: 40%; border-radius: 9999px; background: linear-gradient(90deg, transparent, #00f59b, transparent); animation: spBar 1.2s ease-in-out infinite; }
+    @keyframes spDraw { to { stroke-dashoffset: 0; } }
+    @keyframes spSpin { to { transform: rotate(360deg); } }
+    @keyframes spFade { to { opacity: 1; } }
+    @keyframes spPulse { 0%,100% { transform: scale(1); } 50% { transform: scale(1.35); } }
+    @keyframes spGlow { 0%,100% { opacity: .35; } 50% { opacity: .9; } }
+    @keyframes spTitle { to { opacity: 1; letter-spacing: .32em; } }
+    @keyframes spBar { 0% { transform: translateX(-120%); } 100% { transform: translateX(320%); } }
+    @media (prefers-reduced-motion: reduce) { #splash * { animation-duration: .01s !important; animation-delay: 0s !important; } }
+    /* marcador por sets */
+    .sets { display: grid; grid-auto-flow: column; grid-auto-columns: 1.35rem; gap: .2rem; }
+    .sets span { text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700; border-radius: .35rem; padding: .05rem 0; background: #0f172a; color: #94a3b8; }
+    .sets span.g { color: #00f59b; background: rgba(0,245,155,.10); }
+  </style>
+</head>
+<body class="min-h-screen pb-16 antialiased">
+
+  <div id="splash">
+    <svg viewBox="0 0 200 200" class="sp-svg">
+      <defs>
+        <linearGradient id="gSplash" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#00f59b"/><stop offset="1" stop-color="#00d2ff"/></linearGradient>
+        <radialGradient id="gGlow" cx="50%" cy="50%" r="50%"><stop offset="0" stop-color="#00f59b" stop-opacity=".35"/><stop offset="1" stop-color="#00f59b" stop-opacity="0"/></radialGradient>
+      </defs>
+      <circle class="sp-glow" cx="100" cy="100" r="92" fill="url(#gGlow)"/>
+      <circle class="sp-ring" cx="100" cy="100" r="86"/>
+      <g class="sp-orbit"><circle cx="100" cy="14" r="5" fill="#00d2ff"/></g>
+      <path class="sp-tri" d="M62 132 L100 58 L138 132 Z"/>
+      <circle class="sp-dot" cx="100" cy="108" r="9"/>
+    </svg>
+    <div class="sp-title">APEX QUANT</div>
+    <div style="margin-top:.35rem;color:#00f59b;font-weight:800;font-size:.7rem;letter-spacing:.45em;font-family:system-ui,-apple-system,'Segoe UI',sans-serif">TENIS</div>
+    <div class="sp-bar"><span></span></div>
+  </div>
+
+  <div class="max-w-md mx-auto px-4 py-4 space-y-4">
+
+    <header class="flex items-center justify-between pb-1">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-brand-primary/20 to-brand-primary/5 border border-brand-primary/30 flex items-center justify-center font-extrabold text-brand-primary tracking-wider text-sm shadow-lg shadow-brand-primary/10">AQ</div>
+        <div>
+          <h1 class="text-lg font-extrabold tracking-tight text-white flex items-center gap-2">
+            Apex Quant
+            <span id="badgeOnline" class="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
+              <span id="badgeDot" class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span><span id="badgeTxt">24/7 ONLINE</span>
+            </span>
+          </h1>
+          <p class="text-[10px] font-extrabold tracking-[0.32em] text-brand-primary leading-tight -mt-0.5">TENIS</p>
+          <p id="verTxt" class="text-[9px] font-mono text-slate-500 leading-tight">Web v1.0 · Bot --</p>
+        </div>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="btnHist" class="w-8 h-8 rounded-lg bg-slate-800/80 text-brand-primary border border-slate-700/60 flex items-center justify-center active:scale-95" title="Histórico acumulado">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18M7 14l4-4 3 3 5-6"></path></svg>
+        </button>
+        <button id="btnOled" class="w-8 h-8 rounded-lg bg-slate-800/80 text-slate-300 border border-slate-700/60 flex items-center justify-center active:scale-95" title="Modo OLED">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path></svg>
+        </button>
+        <button id="btnRefresh" class="w-8 h-8 rounded-lg bg-slate-800/80 text-slate-300 border border-slate-700/60 flex items-center justify-center active:scale-95" title="Actualizar datos">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="flex items-center justify-between gap-2 px-3 py-2 rounded-xl bg-slate-900/70 border border-slate-800 text-[10px] font-mono text-slate-400">
+      <span class="flex items-center gap-1.5 min-w-0"><span id="stDot" class="w-2 h-2 rounded-full bg-slate-500 flex-shrink-0"></span><span id="stBot" class="truncate">Bot: --</span></span>
+      <span id="stApi" class="whitespace-nowrap">Cuotas: --</span>
+      <span id="stCred" class="whitespace-nowrap">💳 --</span>
+    </div>
+
+    <a id="tgBanner" href="#" target="_blank" rel="noopener noreferrer" class="block p-3.5 rounded-2xl bg-gradient-to-r from-[#0088cc]/15 via-slate-900 to-slate-900 border border-[#0088cc]/40 transition shadow-lg active:scale-[0.99]">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-[#0088cc]/20 border border-[#0088cc]/40 flex items-center justify-center text-[#0088cc]">
+            <svg class="w-5 h-5" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+          </div>
+          <div>
+            <div class="flex items-center gap-2"><span class="text-xs font-bold text-white tracking-wide">Canal Telegram Oficial</span><span class="w-1.5 h-1.5 rounded-full bg-brand-primary animate-ping"></span></div>
+            <p class="text-[11px] text-slate-400 font-mono">Alertas automáticas en <span id="tgNombre" class="text-[#0088cc] font-semibold">@--</span></p>
+          </div>
+        </div>
+        <div class="px-2.5 py-1 rounded-lg bg-[#0088cc]/20 border border-[#0088cc]/30 text-[#0088cc] text-[10px] font-bold">ACTIVO ›</div>
+      </div>
+    </a>
+
+    <div class="px-3 py-2 rounded-xl bg-slate-900/50 border border-slate-800/80 text-[9px] leading-snug text-slate-500">
+      <span class="text-slate-400 font-semibold">🔞 Solo mayores de 18 años.</span> El juego puede crear adicción: juega con responsabilidad y solo con dinero que puedas permitirte perder. Contenido informativo y estadístico, no constituye asesoramiento ni garantiza resultados. Si un jugador se retira, el bot da la apuesta por anulada (revisa las normas de tu casa). Ayuda y autoexclusión: jugarbien.es
+    </div>
+
+    <div class="grid grid-cols-3 gap-1.5 text-center">
+      <div class="px-2 py-1.5 rounded-xl bg-brand-card/90 border border-brand-border/70"><span class="text-[9px] font-bold tracking-wider text-slate-400 uppercase block">Partidos</span><span id="statPartidos" class="text-base font-extrabold text-white font-mono block leading-tight">--</span><span class="text-[8px] text-slate-500 font-medium">Monitoreo</span></div>
+      <div class="px-2 py-1.5 rounded-xl bg-brand-card/90 border border-brand-border/70"><span class="text-[9px] font-bold tracking-wider text-slate-400 uppercase block">Filtro EV</span><span class="text-base font-extrabold text-brand-primary font-mono block leading-tight">+3.0%</span><span class="text-[8px] text-slate-500 font-medium">Ventaja</span></div>
+      <div class="px-2 py-1.5 rounded-xl bg-brand-card/90 border border-brand-border/70"><span class="text-[9px] font-bold tracking-wider text-slate-400 uppercase block">Modelo</span><span class="text-base font-extrabold text-brand-highlight font-mono block leading-tight">Elo</span><span class="text-[8px] text-slate-500 font-medium">por superficie</span></div>
+    </div>
+
+    <div id="tarjetasRend"></div>
+
+    <div>
+      <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1.5 px-1 font-medium"><span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-brand-highlight"></span>Semana actual</span></div>
+      <div class="grid grid-cols-3 gap-2 text-center">
+        <div class="p-3 rounded-2xl bg-brand-card border border-brand-primary/40 shadow-sm"><span class="text-[10px] font-bold text-brand-primary uppercase tracking-wide block">Telegram</span><span id="efectividadTelegram" class="text-base font-extrabold text-brand-primary font-mono mt-0.5 block">--%</span><span id="conteoTelegram" class="text-[9px] text-slate-400 font-mono">0V - 0D TG</span></div>
+        <div class="p-3 rounded-2xl bg-brand-card border border-brand-border shadow-sm"><span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">Control</span><span id="efectividadSinAlerta" class="text-base font-extrabold text-slate-300 font-mono mt-0.5 block">--%</span><span id="conteoSinAlerta" class="text-[9px] text-slate-400 font-mono">0V - 0D No TG</span></div>
+        <div class="p-3 rounded-2xl bg-brand-card border border-brand-border shadow-sm"><span class="text-[10px] font-bold text-slate-400 uppercase tracking-wide block">Global Total</span><span id="efectividadGlobal" class="text-base font-extrabold text-white font-mono mt-0.5 block">--%</span><span id="conteoGlobal" class="text-[9px] text-slate-400 font-mono">0V - 0D Total</span></div>
+      </div>
+    </div>
+
+    <div class="flex p-1 bg-slate-900/90 rounded-2xl border border-brand-border/80">
+      <button id="tabHoy" data-tab="hoy" class="tab-btn flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"><span>En Juego / Hoy</span><span id="countHoy" class="text-[10px] px-1.5 rounded-full font-extrabold">(0)</span></button>
+      <button data-tab="finalizados" class="tab-btn flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"><span>Finalizados</span><span id="countFinalizados" class="text-[10px] px-1.5 rounded-full font-extrabold">(0)</span></button>
+      <button data-tab="alertas" class="tab-btn flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"><span>Alertas</span><span id="countAlertas" class="text-[10px] px-1.5 rounded-full font-extrabold">(0)</span></button>
+    </div>
+
+    <div>
+      <div class="flex items-center justify-between text-[11px] text-slate-400 mb-1.5 px-1 font-medium"><span class="uppercase tracking-wider font-bold">Circuitos y superficies</span><span id="syncHour" class="text-[10px] text-slate-400 font-mono">Sincronizando...</span></div>
+      <div id="filtros" class="flex gap-1.5 overflow-x-auto pb-1 custom-scroll"></div>
+    </div>
+
+    <div class="flex items-center justify-between text-[11px] text-slate-400 pt-1 px-1 font-medium"><span id="activeSectionTitle" class="uppercase tracking-wider font-extrabold text-slate-300">Partidos programados y en vivo</span></div>
+
+    <div id="matchesContainer" class="space-y-3">
+      <div class="p-6 rounded-2xl bg-brand-card/50 border border-brand-border/60 text-center text-slate-400">
+        <div class="w-6 h-6 border-2 border-brand-primary border-t-transparent rounded-full animate-spin mx-auto mb-2"></div>
+        <p class="text-xs font-medium">Sincronizando pronósticos y partidos reales...</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalHist" class="hidden fixed inset-0 z-50 bg-black/80 items-end justify-center">
+    <div class="w-full max-w-md max-h-[88vh] overflow-y-auto rounded-t-3xl bg-brand-surface border border-brand-border p-4 space-y-3 custom-scroll">
+      <div class="flex items-center justify-between">
+        <div><h2 class="text-sm font-extrabold text-white uppercase tracking-wider">Histórico acumulado</h2><p class="text-[10px] text-slate-400">No se reinicia los lunes</p></div>
+        <button id="btnCerrarHist" class="w-8 h-8 rounded-lg bg-slate-800/80 text-slate-300 border border-slate-700/60 flex items-center justify-center">✕</button>
+      </div>
+      <div id="histContenido" class="space-y-3"></div>
+    </div>
+  </div>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: {
+      fontFamily: { sans: ['Plus Jakarta Sans', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
+      colors: { brand: { primary: '#00f59b', surface: '#0c1322', card: '#141b2b', border: '#1f293d', highlight: '#00d2ff' } } } } };
+  </script>
+
+  <script>
+    // ---------------------------------------------------------------
+    // Canal de Telegram de tenis: si usas otro nombre, cámbialo SOLO aquí
+    // ---------------------------------------------------------------
+    const TG_CANAL = 'apex_quant_tenis';
+    const WEB_URL = 'https://apexquantbot.github.io/apex_quant_tenis/';
+    const VERSION_WEB = '1.0';
+
+    const SUPERFICIES = {
+      Hard:  { txt: 'Pista dura', cls: 'bg-sky-500/15 text-sky-300 border-sky-500/30', ico: '🔵' },
+      Clay:  { txt: 'Tierra', cls: 'bg-orange-500/15 text-orange-300 border-orange-500/30', ico: '🟠' },
+      Grass: { txt: 'Hierba', cls: 'bg-lime-500/15 text-lime-300 border-lime-500/30', ico: '🟢' }
+    };
+    const FILTROS = [
+      ['LIVE', '<span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span> EN VIVO'], ['all', 'Todos'],
+      ['PICK', 'Con pick'], ['ALERTA', 'Con alerta'], ['atp', 'ATP 👨'], ['wta', 'WTA 👩'],
+      ['S:Hard', '🔵 Dura'], ['S:Clay', '🟠 Tierra'], ['S:Grass', '🟢 Hierba']
+    ];
+
+    let state = { activeTab: 'hoy', currentFilter: 'all', partidos: [], alertas: [], semanaActiva: '', lunesSemana: '' };
+
+    const esc = (t) => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    function circulos(cadena) {
+      return (cadena || '').replace(/[^WL]/gi, '').split('').map(l => l.toUpperCase() === 'W'
+        ? '<span class="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-emerald-500/25 text-emerald-400 border border-emerald-500/40 text-[8.5px] font-bold mx-[1px]">W</span>'
+        : '<span class="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-rose-500/25 text-rose-400 border border-rose-500/40 text-[8.5px] font-bold mx-[1px]">L</span>').join('');
+    }
+    function rachaHtml(f) {
+      if (!f || !f.racha_local || !f.racha_visitante) return '<div class="text-[10px] text-slate-500 mt-1">📉 Forma reciente: sin datos suficientes</div>';
+      return `<div class="flex items-center flex-wrap gap-1.5 text-[11px] text-slate-400 mt-1"><span class="text-[9px] font-bold uppercase tracking-wider text-slate-500">FORMA:</span>${circulos(f.racha_local)}<span class="text-[10px] text-slate-500">vs</span>${circulos(f.racha_visitante)}${f.tendencia ? `<span class="text-slate-600">•</span><span class="text-[10px] text-slate-300">${esc(f.tendencia)}</span>` : ''}</div>`;
+    }
+
+    function chipSuperficie(s) {
+      const x = SUPERFICIES[s] || SUPERFICIES.Hard;
+      return `<span class="px-1.5 py-0.5 rounded-md text-[9px] font-bold border ${x.cls} whitespace-nowrap">${x.ico} ${x.txt}</span>`;
+    }
+
+    function tarjetaMercado(tipo) {
+      tipo = (tipo || '').toUpperCase();
+      if (tipo === 'HANDICAP') return { txt: '⚖️ HÁNDICAP JUEGOS', cls: 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' };
+      if (tipo === 'JUEGOS') return { txt: '🎯 TOTAL JUEGOS', cls: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' };
+      return { txt: '🏆 VICTORIA', cls: 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40' };
+    }
+
+    function textoPrevision(p) {
+      const v = p.prevision;
+      if (!v) return '<div class="text-[10px] text-slate-500">📐 Modelo: faltan partidos registrados de algún jugador/a</div>';
+      return `<div class="text-[10px] text-slate-400 space-y-0.5">
+        <div>📐 Previsión: <span class="text-slate-200 font-semibold">${v.prob_local}% - ${v.prob_visitante}%</span> · ${v.juegos} juegos esperados</div>
+        <div>Elo (superficie): ${v.elo_local} vs ${v.elo_visitante} · puntos ganados al saque ${v.saque_local}% / ${v.saque_visitante}%</div></div>`;
+    }
+
+    function esDeLaSemanaActual(item) {
+      if (!item || item.es_semana_actual === false) return false;
+      if (state.semanaActiva && item.semana_id && item.semana_id !== state.semanaActiva) return false;
+      if (state.lunesSemana && (item.fecha || '').length >= 10 && item.fecha < state.lunesSemana) return false;
+      return true;
+    }
+    const alertasSemana = () => state.alertas.filter(esDeLaSemanaActual);
+
+    async function cargarDatos() {
+      try {
+        const resp = await fetch('datos.json?t=' + Date.now());
+        if (!resp.ok) throw new Error('sin datos');
+        const d = await resp.json();
+        Object.assign(state, {
+          partidos: d.partidos || [], alertas: d.alertas || [], semanaActiva: d.semana_activa || '', lunesSemana: d.lunes_semana || '',
+          ultima: d.ultima_actualizacion || '', ultimaUtc: d.ultima_actualizacion_utc || '',
+          creditos: (d.creditos_odds_restantes !== undefined) ? d.creditos_odds_restantes : null, apiCuotas: d.api_cuotas_estado || '', versionBot: d.version_bot || ''
+        });
+        actualizarMetricas(); actualizarEstadoBot(); renderizar();
+      } catch (e) {
+        document.getElementById('matchesContainer').innerHTML = `<div class="p-6 rounded-2xl bg-brand-card border border-brand-border text-center"><p class="text-xs text-slate-300 font-medium">Esperando datos de la primera ejecución del bot...</p><p class="text-[10px] text-slate-500 mt-1">El archivo datos.json se genera automáticamente en el próximo ciclo (cada 15 minutos).</p></div>`;
+      }
+    }
+
+    // ---------------- Rendimiento ----------------
+    function num(v, def) { const x = parseFloat(String(v == null ? '' : v).split('/')[0].replace('@', '').replace('U', '').trim()); return isNaN(x) ? def : x; }
+    function rendimiento(items) {
+      let apostado = 0, neto = 0, fin = 0, ok = 0; const curva = [0];
+      items.forEach(it => {
+        if (!esDeLaSemanaActual(it) || it.push) return;
+        const esFin = it.finalizado === true || (it.acertado !== null && it.acertado !== undefined);
+        if (!esFin) return;
+        const stk = Math.max(0.1, num(it.stake, 1)), cuota = Math.max(1.01, num(it.cuota, 2));
+        fin++; apostado += stk;
+        if (it.acertado === true) { ok++; neto += stk * (cuota - 1); } else neto -= stk;
+        curva.push(Math.round(neto * 100) / 100);
+      });
+      return { fin, ok, apostado, neto, roi: apostado > 0 ? neto / apostado * 100 : 0, curva };
+    }
+    function trazo(puntos, h = 30) {
+      if (!puntos || puntos.length < 2) return `M 0 ${h - 5} L 100 ${h - 5}`;
+      const min = Math.min(0, ...puntos), max = Math.max(1, ...puntos), r = (max - min) || 1;
+      return puntos.map((p, i) => `${i ? 'L' : 'M'} ${(i / (puntos.length - 1) * 100).toFixed(1)} ${(h - 4 - (p - min) / r * (h - 8)).toFixed(1)}`).join(' ');
+    }
+    const fmtU = (v) => (v >= 0 ? '+' : '') + v.toFixed(2) + ' U.';
+    const fmtPct = (v) => (v >= 0 ? '+' : '') + v.toFixed(1) + '%';
+
+    function tarjetaRend(k, etiqueta, chipCls, color, nota, r) {
+      let abierta = false; try { abierta = localStorage.getItem('apex_tarjeta_' + k) === '1'; } catch (e) {}
+      return `<div class="p-3 rounded-2xl bg-brand-card border border-brand-border shadow-md mb-3">
+        <div class="flex items-center justify-between gap-2 cursor-pointer select-none" onclick="toggleTarjeta('${k}')">
+          <div class="min-w-0"><div class="flex items-center gap-1.5 flex-wrap"><span class="text-[11px] font-extrabold text-white uppercase tracking-wide">Rendimiento Semanal</span><span class="px-1.5 py-0.5 rounded text-[8px] font-bold border ${chipCls}">${etiqueta}</span></div><p class="text-[9px] text-slate-400 leading-tight">Curva de Equity &amp; Balance de Unidades</p></div>
+          <div class="flex items-center gap-2 flex-shrink-0"><div class="text-right"><span class="text-[8px] text-slate-400 font-bold uppercase tracking-wider block">Balance Neto</span><span class="text-xs font-extrabold font-mono" style="color:${r.neto >= 0 ? color : '#ff4b4b'}">${fmtU(r.neto)}</span></div><span id="chev${k}" class="text-brand-primary text-sm w-3 text-center">${abierta ? '▾' : '▸'}</span></div>
+        </div>
+        <div id="det${k}" class="${abierta ? '' : 'hidden'}">
+          <div class="mt-1.5 px-2 py-1 rounded-lg bg-slate-900/60 border border-slate-800 text-[9px] text-slate-300 leading-snug">${nota}</div>
+          <div class="grid grid-cols-3 gap-1 mt-1.5 pt-1.5 border-t border-slate-800 text-center">
+            <div><span class="text-[8px] text-slate-400 uppercase font-bold block">Yield / ROI</span><span class="text-[11px] font-bold font-mono" style="color:${color}">${fmtPct(r.roi)}</span></div>
+            <div><span class="text-[8px] text-slate-400 uppercase font-bold block">Unidades</span><span class="text-[11px] font-bold font-mono text-slate-200">${fmtU(r.neto)}</span></div>
+            <div><span class="text-[8px] text-slate-400 uppercase font-bold block">Stake Apostado</span><span class="text-[11px] font-bold font-mono text-slate-300">${r.apostado.toFixed(1)} U.</span></div>
+          </div>
+          <div class="mt-1.5 pt-1.5 border-t border-slate-800/80"><div class="flex justify-end text-[9px] text-slate-400 mb-1 font-mono">${r.fin} picks evaluados</div>
+            <div class="h-7 w-full bg-slate-900/80 rounded-lg p-1"><svg class="w-full h-full overflow-visible" viewBox="0 0 100 30" preserveAspectRatio="none"><path d="${trazo(r.curva)}" fill="none" stroke="${(r.curva[r.curva.length - 1] || 0) >= 0 ? color : '#ff4b4b'}" stroke-width="2" stroke-linecap="round"/></svg></div></div>
+        </div></div>`;
+    }
+    function toggleTarjeta(k) {
+      const det = document.getElementById('det' + k), ch = document.getElementById('chev' + k);
+      if (!det) return;
+      const abierta = det.classList.toggle('hidden') === false;
+      if (ch) ch.innerText = abierta ? '▾' : '▸';
+      try { localStorage.setItem('apex_tarjeta_' + k, abierta ? '1' : '0'); } catch (e) {}
+    }
+
+    function actualizarMetricas() {
+      document.getElementById('statPartidos').innerText = state.partidos.length || '--';
+      document.getElementById('syncHour').innerText = state.ultima ? state.ultima + ' sync' : 'Sincronizado';
+      const activos = state.partidos.filter(p => !['FINISHED', 'CANCELLED'].includes(p.estado));
+      const fin = state.partidos.filter(p => ['FINISHED', 'CANCELLED'].includes(p.estado));
+      const al = alertasSemana();
+      document.getElementById('countHoy').innerText = `(${activos.length})`;
+      document.getElementById('countFinalizados').innerText = `(${fin.length})`;
+      document.getElementById('countAlertas').innerText = `(${al.length})`;
+
+      const rTG = rendimiento(al);
+      const control = state.partidos.filter(p => p.tiene_pronostico && !p.telegram_enviado && p.acertado !== null && p.acertado !== undefined && !p.solo_modelo)
+        .map(p => Object.assign({}, p, { finalizado: true }));
+      const rCT = rendimiento(control);
+      const rGL = { fin: rTG.fin + rCT.fin, ok: rTG.ok + rCT.ok, apostado: rTG.apostado + rCT.apostado, neto: rTG.neto + rCT.neto, curva: rTG.fin ? rTG.curva : rCT.curva };
+      rGL.roi = rGL.apostado > 0 ? rGL.neto / rGL.apostado * 100 : 0;
+      const pct = (r) => r.fin ? Math.round(r.ok / r.fin * 100) + '%' : '--%';
+      document.getElementById('efectividadTelegram').innerText = pct(rTG);
+      document.getElementById('conteoTelegram').innerText = `${rTG.ok}V - ${rTG.fin - rTG.ok}D TG`;
+      document.getElementById('efectividadSinAlerta').innerText = pct(rCT);
+      document.getElementById('conteoSinAlerta').innerText = `${rCT.ok}V - ${rCT.fin - rCT.ok}D No TG`;
+      document.getElementById('efectividadGlobal').innerText = pct(rGL);
+      document.getElementById('conteoGlobal').innerText = `${rGL.ok}V - ${rGL.fin - rGL.ok}D Total`;
+      document.getElementById('tarjetasRend').innerHTML =
+        tarjetaRend('TG', 'EXCLUSIVO TELEGRAM', 'bg-emerald-500/10 text-emerald-400 border-emerald-500/30', '#00f59b', `Métricas calculadas <strong>solo</strong> con las alertas oficiales del canal de Telegram.`, rTG) +
+        tarjetaRend('Sin', 'CONTROL (DESCARTADAS)', 'bg-slate-800 text-slate-300 border-slate-700', '#94a3b8', 'Picks analizados con cuotas reales que <strong>no se enviaron</strong> (ventaja &lt; 3% o sin respaldo del modelo).', rCT) +
+        tarjetaRend('Global', 'GLOBAL TOTAL', 'bg-sky-500/10 text-sky-400 border-sky-500/30', '#38bdf8', 'Suma de Telegram + Control.', rGL);
+    }
+
+    function actualizarEstadoBot() {
+      document.getElementById('verTxt').innerText = `Web v${VERSION_WEB} · Bot ${state.versionBot ? 'v' + state.versionBot : '--'}`;
+      let mins = null;
+      const t = Date.parse(state.ultimaUtc || '');
+      if (!isNaN(t)) mins = Math.max(0, Math.round((Date.now() - t) / 60000));
+      const nivel = mins === null ? 'gris' : (mins <= 90 ? 'ok' : (mins <= 180 ? 'aviso' : 'error'));
+      document.getElementById('stDot').className = 'w-2 h-2 rounded-full flex-shrink-0 ' + { ok: 'bg-emerald-400', aviso: 'bg-amber-400', error: 'bg-rose-500', gris: 'bg-slate-500' }[nivel];
+      document.getElementById('stBot').innerText = mins === null ? 'Bot: sin datos' : 'Bot: ' + (mins < 60 ? `hace ${mins} min` : `hace ${Math.floor(mins / 60)} h ${mins % 60} min`);
+      const api = state.apiCuotas || '', elApi = document.getElementById('stApi');
+      if (api === 'ok') { elApi.innerText = 'Cuotas OK'; elApi.className = 'whitespace-nowrap text-emerald-400'; }
+      else if (api.startsWith('error')) { elApi.innerText = 'Cuotas ERROR'; elApi.className = 'whitespace-nowrap text-rose-400'; }
+      else if (api === 'sin_clave') { elApi.innerText = 'Solo modelo'; elApi.className = 'whitespace-nowrap text-amber-400'; }
+      const elC = document.getElementById('stCred');
+      if (typeof state.creditos === 'number') { elC.innerText = `💳 ${Math.round(state.creditos)}`; elC.className = 'whitespace-nowrap ' + (state.creditos < 25 ? 'text-rose-400' : (state.creditos < 60 ? 'text-amber-400' : 'text-slate-300')); }
+      const badge = document.getElementById('badgeOnline'), bdot = document.getElementById('badgeDot'), btxt = document.getElementById('badgeTxt');
+      const base = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold border ';
+      const cfg = { ok: ['bg-emerald-500/10 text-emerald-400 border-emerald-500/30', 'bg-emerald-400 animate-pulse', '24/7 ONLINE'],
+        aviso: ['bg-amber-500/10 text-amber-400 border-amber-500/30', 'bg-amber-400', 'RETRASADO'],
+        error: ['bg-rose-500/10 text-rose-400 border-rose-500/30', 'bg-rose-500', 'SIN ACTUALIZAR'],
+        gris: ['bg-slate-700/30 text-slate-300 border-slate-600/40', 'bg-slate-400', 'ESPERANDO DATOS'] }[nivel];
+      badge.className = base + cfg[0]; bdot.className = 'w-1.5 h-1.5 rounded-full ' + cfg[1]; btxt.innerText = cfg[2];
+    }
+
+    // ---------------- Tarjetas de partido ----------------
+    function filaJugador(nombre, flag, sets, idx, ganador) {
+      const celdas = (sets || []).map(s => `<span class="${s[idx] > s[1 - idx] ? 'g' : ''}">${s[idx]}</span>`).join('');
+      const gana = ganador === idx + 1;
+      return `<div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-2 min-w-0">${flag ? `<img src="${esc(flag)}" class="w-5 h-3.5 object-cover rounded-sm flex-shrink-0" alt="" onerror="this.remove()">` : '<span class="w-5 text-center">🎾</span>'}
+          <span class="text-sm font-extrabold leading-tight truncate ${gana ? 'text-brand-primary' : 'text-white'}">${esc(nombre)}${gana ? ' ✓' : ''}</span></div>
+        ${celdas ? `<div class="sets">${celdas}</div>` : ''}</div>`;
+    }
+
+    function badgeEstado(p) {
+      if (p.estado === 'IN_PLAY') return `<span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-extrabold bg-rose-500/15 text-rose-400 border border-rose-500/30 whitespace-nowrap"><span class="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>EN JUEGO${p.minuto_juego ? ' · ' + esc(p.minuto_juego) : ''}</span>`;
+      if (p.estado === 'FINISHED') {
+        const res = p.acertado === true ? '<span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">✓ ACERTADO</span>'
+          : p.acertado === false ? '<span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-rose-500/15 text-rose-400 border border-rose-500/30">✕ PERDIDO</span>'
+          : p.push ? '<span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold bg-slate-500/20 text-slate-300 border border-slate-500/40">↩ ANULADA</span>' : '';
+        return `<div class="flex items-center gap-1.5"><span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700">${p.retirada ? 'RETIRADA' : 'FINAL'}</span>${res}</div>`;
+      }
+      if (p.estado === 'CANCELLED') return '<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-800 text-slate-400 border border-slate-700">WALKOVER / CANCELADO</span>';
+      if (p.estado === 'POSTPONED') return '<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30">APLAZADO</span>';
+      if (p.estado === 'PENDING_RESULT') return '<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-500/15 text-amber-400 border border-amber-500/30 whitespace-nowrap">ESPERANDO RESULTADO</span>';
+      return '<span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-800/80 text-slate-400 border border-slate-700/60">PROGRAMADO</span>';
+    }
+
+    function cabecera(p) {
+      return `<div class="flex items-center justify-between gap-2">
+        <div class="flex items-center gap-1.5 min-w-0 flex-wrap">
+          <span class="px-2 py-0.5 rounded-md text-[10px] font-bold bg-slate-800 text-slate-300 border border-slate-700 truncate max-w-[11rem]">${esc(p.circuito || '')} · ${esc(p.liga || 'Torneo')}</span>
+          ${chipSuperficie(p.superficie)}
+        </div>
+        <div class="flex-shrink-0">${badgeEstado(p)}</div></div>
+        <div class="flex items-center gap-2 text-[10px] text-slate-500 font-mono">${p.ronda ? `<span>${esc(p.ronda)}</span><span>•</span>` : ''}<span>${esc(p.fecha_hora_display || p.hora || '')}</span>${p.mejor_de === 5 ? '<span>•</span><span>al mejor de 5</span>' : ''}</div>`;
+    }
+
+    function tarjetaPartido(p) {
+      const jugadores = `<div class="space-y-1.5 pt-0.5">${filaJugador(p.local, p.escudo_local, p.sets, 0, p.ganador)}${filaJugador(p.visitante, p.escudo_visitante, p.sets, 1, p.ganador)}</div>`;
+      const tienePron = !!(p.tiene_pronostico && p.mercado);
+      if (!tienePron) {
+        const id = 'det-' + p.id;
+        const nota = p.analizado ? (p.nota_cuotas || 'Sin valor detectado') : 'El análisis con cuotas reales se genera ~90 min antes de la hora prevista';
+        return `<div onclick="document.getElementById('${id}').classList.toggle('hidden')" class="px-3.5 py-3 rounded-2xl bg-brand-card/80 border border-brand-border/70 space-y-2 cursor-pointer">
+          ${cabecera(p)}${jugadores}
+          <div id="${id}" class="hidden pt-1.5 space-y-1 border-t border-slate-800/80"><div class="text-[11px] text-slate-400">${esc(nota)}</div>${textoPrevision(p)}${rachaHtml(p.form_info)}</div></div>`;
+      }
+      const t = tarjetaMercado(p.tipo_mercado);
+      const evNum = parseFloat(p.ev_numero) || 0;
+      const nivel = evNum >= 10 ? 'ÉLITE' : (evNum >= 6 ? 'ALTO' : (evNum >= 3 ? 'SÓLIDO' : 'BAJO'));
+      const barra = Math.max(8, Math.min(100, Math.round(evNum / 15 * 100)));
+      const etiqCuota = p.cuota_minima ? 'CUOTA MÍNIMA' : ('CUOTA ' + (p.casa || '')).toUpperCase().trim();
+      const lineaModelo = p.solo_modelo
+        ? `<div class="text-[10px] text-amber-300">📐 Pronóstico del modelo (sin cuotas de mercado para este partido): probabilidad ${p.prob_estadistica}% · Elo ${p.xg_local} vs ${p.xg_visitante}. Juégalo solo a la cuota mínima o superior.</div>`
+        : (p.prob_estadistica != null
+          ? `<div class="text-[10px] ${p.confirmado_stats ? 'text-emerald-400' : 'text-slate-400'}">📐 Modelo: ${p.prob_estadistica}% vs mercado ${p.prob_mercado}% · ${p.confirmado_stats ? 'respalda la apuesta ✓' : 'no respalda la apuesta'}</div>`
+          : '<div class="text-[10px] text-slate-500">📐 Sin datos estadísticos suficientes</div>');
+      const aviso = !p.telegram_enviado ? (evNum < 3 ? '<div class="text-[10px] text-slate-400">EV inferior al 3%: no se envía alerta a Telegram.</div>' : (!p.confirmado_stats ? '<div class="text-[10px] text-slate-400">Sin respaldo estadístico: no se envía alerta a Telegram.</div>' : '')) : '';
+      return `<div class="p-4 rounded-2xl bg-brand-card border border-brand-border space-y-3 shadow-md">
+        ${cabecera(p)}
+        <div class="flex items-center justify-between gap-3"><div class="flex-1 min-w-0">${jugadores}</div>
+          <div class="text-right flex-shrink-0"><span class="text-[9px] uppercase tracking-wider text-slate-500 font-bold block">${esc(etiqCuota)}</span><span class="text-base font-extrabold text-brand-primary font-mono">@${p.cuota}</span></div></div>
+        <div class="p-3 rounded-xl bg-slate-900/90 border border-slate-800/90 space-y-2">
+          <div class="flex items-center justify-between gap-2"><span class="flex items-center gap-1 flex-wrap"><span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold ${t.cls}">${t.txt}</span>${p.solo_modelo ? '<span class="px-1.5 py-0.5 rounded-md text-[9px] font-extrabold bg-slate-800 text-amber-300 border border-amber-500/30">📐 MODELO</span>' : ''}</span>
+            <span class="text-xs font-extrabold text-amber-400 font-mono bg-amber-400/10 px-2 py-0.5 rounded border border-amber-400/20">${esc(p.ev)}</span></div>
+          <div class="text-xs font-bold text-slate-200">PRONÓSTICO: <span class="text-white">${esc(p.mercado)}</span></div>
+          <div><div class="flex items-center justify-between text-[10px] mb-1"><span class="text-slate-400">${p.solo_modelo ? 'Margen exigido sobre la cuota justa' : 'Ventaja vs consenso' + (p.n_casas ? ' (' + p.n_casas + ' casas)' : '')}</span><span class="text-amber-400 font-extrabold text-[9px]">VALOR ${nivel}</span></div>
+            <div class="h-1.5 w-full bg-slate-800 rounded-full overflow-hidden"><div class="h-full bg-gradient-to-r from-emerald-400 via-amber-400 to-amber-500 rounded-full" style="width:${barra}%"></div></div></div>
+          ${lineaModelo}${aviso}${textoPrevision(p)}${rachaHtml(p.form_info)}
+        </div>
+        <div class="grid grid-cols-4 gap-2 text-center">
+          <div class="p-2 rounded-xl bg-slate-900/60 border border-slate-800"><span class="text-[9px] text-slate-500 uppercase font-bold block">${p.solo_modelo ? 'Prob. Modelo' : 'Prob.'}</span><span class="text-xs font-extrabold text-slate-200 font-mono">${esc(p.prob_modelo)}</span></div>
+          <div class="p-2 rounded-xl bg-slate-900/60 border border-slate-800"><span class="text-[9px] text-slate-500 uppercase font-bold block">Ventaja</span><span class="text-xs font-extrabold text-emerald-400 font-mono">${esc(p.ev)}</span></div>
+          <div class="p-2 rounded-xl bg-slate-900/60 border border-slate-800"><span class="text-[9px] text-slate-500 uppercase font-bold block">Stake</span><span class="text-xs font-extrabold text-brand-highlight font-mono">${p.stake}/10</span></div>
+          <button onclick="event.stopPropagation();compartir('${p.id}')" class="p-2 rounded-xl bg-slate-900/60 border border-slate-800 text-slate-400 flex flex-col items-center justify-center"><span class="text-sm leading-none">↗</span><span class="text-[9px] font-bold">Compartir</span></button>
+        </div></div>`;
+    }
+
+    function tarjetaAlerta(a) {
+      const fin = a.finalizado === true || (a.acertado !== null && a.acertado !== undefined);
+      const marc = a.marcador_final || a.marcador || '';
+      let badge = '<span class="px-2 py-0.5 rounded text-[9px] font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">Alerta Real</span>';
+      if (a.acertado === true) badge = '<span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">✓ ACERTADO</span>';
+      else if (a.acertado === false) badge = '<span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-rose-500/20 text-rose-400 border border-rose-500/40">✕ PERDIDO</span>';
+      else if (a.push) badge = '<span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-slate-500/20 text-slate-300 border border-slate-500/40">↩ ANULADA</span>';
+      else if (a.estado_partido === 'IN_PLAY') badge = '<span class="px-2 py-0.5 rounded text-[10px] font-extrabold bg-rose-500/15 text-rose-400 border border-rose-500/30 animate-pulse">EN JUEGO</span>';
+      let cuerpo;
+      if (a.es_combinada && a.legs) {
+        cuerpo = `<div class="text-sm font-extrabold text-white flex items-center gap-2 flex-wrap"><span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-violet-500/20 text-violet-300 border border-violet-500/40">🧩 COMBINADA ×${a.legs.length}</span><span class="text-[11px] text-slate-400">${esc(a.casa || '')}</span></div>
+          <div class="space-y-1">${a.legs.map(l => `<div class="flex items-center justify-between gap-2 text-[12px]"><span class="text-slate-200 min-w-0 truncate">${l.res === true ? '✅' : (l.res === false ? '❌' : (l.res === 'NULA' ? '➖' : '⏳'))} <strong class="text-brand-primary">${esc(l.mercado)}</strong> <span class="text-slate-500 text-[10px]">${esc(l.partido)}</span></span><span class="font-mono text-slate-300">@${l.cuota}</span></div>`).join('')}</div>
+          <div class="text-[10px] text-slate-400 font-mono">Prob. de acierto ${a.prob_combinada}% · deben acertar todas</div>`;
+      } else {
+        const t = tarjetaMercado(a.tipo_mercado);
+        const ico = a.acertado === true ? '✅' : (a.acertado === false ? '❌' : (a.push ? '➖' : '⏳'));
+        cuerpo = `<div class="text-sm font-extrabold text-white flex items-center gap-2 flex-wrap"><span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold ${t.cls}">${t.txt}</span><span class="text-[12px] text-slate-200">${esc(a.partido)}</span>${marc ? `<span class="text-[11px] font-mono text-slate-400">${esc(marc)}</span>` : ''}</div>
+          <div class="text-[10px] text-slate-500">${esc(a.liga || '')}</div>
+          <div class="flex items-center justify-between gap-2 text-[12px]"><span class="text-slate-200">${ico} <strong class="text-brand-primary">${esc(a.mercado)}</strong></span>${a.prob_modelo ? `<span class="font-mono text-slate-400 text-[11px]">${esc(a.prob_modelo)}</span>` : ''}</div>`;
+      }
+      return `<div class="p-4 rounded-2xl bg-brand-card border border-brand-border space-y-2.5 shadow-md">
+        <div class="flex items-center justify-between gap-2"><span class="text-[11px] text-brand-highlight font-mono">● Enviado a Telegram • ${esc(a.fecha_hora_display || a.hora || '')}</span>${badge}</div>
+        ${cuerpo}
+        <div class="flex items-center justify-between pt-1 border-t border-slate-800/80 text-xs font-mono text-slate-300"><div class="flex items-center gap-3 flex-wrap"><span>Cuota${a.cuota_minima ? ' mín.' : ''}: <strong class="text-white">${esc(a.cuota)}</strong></span><span>Ventaja: <strong class="text-emerald-400">${esc(a.ev)}</strong></span><span>Stake: <strong class="text-brand-highlight">${esc(a.stake)}</strong></span></div>
+          <span class="text-[10px] ${fin ? 'text-slate-500' : 'text-emerald-400/80'} font-bold">${fin ? 'CERRADA' : 'ACTIVA'}</span></div></div>`;
+    }
+
+    function renderizar() {
+      const cont = document.getElementById('matchesContainer'), title = document.getElementById('activeSectionTitle');
+      if (state.activeTab === 'alertas') {
+        title.innerText = 'Historial de alertas Telegram emitidas';
+        const al = alertasSemana();
+        cont.innerHTML = al.length ? al.slice().reverse().map(tarjetaAlerta).join('')
+          : '<div class="p-8 rounded-2xl bg-brand-card border border-brand-border text-center"><p class="text-xs text-slate-300 font-medium">Aún no hay alertas oficiales esta semana</p><p class="text-[10px] text-slate-500 mt-1">El bot avisa cuando detecta valor (+EV ≥ 3%) con respaldo del modelo. Se reinicia cada lunes a las 00:00.</p></div>';
+        return;
+      }
+      const fin = state.activeTab === 'finalizados';
+      title.innerText = fin ? 'Partidos finalizados recientes' : 'Partidos programados y en vivo';
+      let lista = state.partidos.filter(p => fin === ['FINISHED', 'CANCELLED'].includes(p.estado))
+        .sort((a, b) => fin ? (b.timestamp_ms || 0) - (a.timestamp_ms || 0) : (a.timestamp_ms || 0) - (b.timestamp_ms || 0));
+      const f = state.currentFilter;
+      if (f === 'LIVE') lista = lista.filter(p => p.estado === 'IN_PLAY');
+      else if (f === 'PICK') lista = lista.filter(p => p.tiene_pronostico && p.mercado);
+      else if (f === 'ALERTA') lista = lista.filter(p => p.telegram_enviado && p.tiene_pronostico);
+      else if (f.startsWith('S:')) lista = lista.filter(p => p.superficie === f.slice(2));
+      else if (f !== 'all') lista = lista.filter(p => p.liga_key === f);
+      cont.innerHTML = lista.length ? lista.map(tarjetaPartido).join('')
+        : `<div class="p-8 rounded-2xl bg-brand-card border border-brand-border text-center"><p class="text-xs text-slate-300 font-medium">No hay partidos en esta sección</p><p class="text-[10px] text-slate-500 mt-1">Fuera de temporada (diciembre) o entre torneos puede no haber partidos.</p></div>`;
+    }
+
+    function pintarFiltros() {
+      document.getElementById('filtros').innerHTML = FILTROS.map(([k, txt]) => {
+        const act = state.currentFilter === k;
+        const cls = act ? (k === 'LIVE' ? 'bg-rose-500 text-white' : 'bg-brand-primary text-slate-950') : (k === 'LIVE' ? 'bg-slate-800/80 text-rose-400 border border-rose-500/30' : 'bg-slate-800/80 text-slate-300 border border-slate-700/60');
+        return `<button data-filter="${k}" class="filter-btn px-3 py-1.5 rounded-xl text-[11px] font-bold whitespace-nowrap flex items-center gap-1.5 ${cls}">${txt}</button>`;
+      }).join('');
+      document.querySelectorAll('.filter-btn').forEach(b => b.addEventListener('click', () => { state.currentFilter = b.dataset.filter; pintarFiltros(); renderizar(); }));
+    }
+    function pintarPestanas() {
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        const act = b.dataset.tab === state.activeTab;
+        b.className = 'tab-btn flex-1 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 ' + (act ? 'bg-brand-primary text-slate-950 shadow-md' : 'text-slate-400');
+        b.querySelector('span:last-child').className = 'text-[10px] px-1.5 rounded-full font-extrabold ' + (act ? 'bg-slate-950/20 text-slate-950' : 'bg-slate-800 text-slate-400');
+      });
+    }
+
+    function compartir(id) {
+      const p = state.partidos.find(x => String(x.id) === String(id));
+      if (!p) return;
+      const texto = `🎯 Pronóstico con valor (+EV) — Apex Quant Tenis:\n🎾 ${p.local} vs ${p.visitante} (${p.liga})\n📌 ${p.mercado}\n💰 Cuota${p.cuota_minima ? ' mínima' : ''}: @${p.cuota}\n📱 ${WEB_URL}`;
+      if (navigator.share) navigator.share({ title: 'Apex Quant Tenis', text: texto }).catch(() => {});
+      else if (navigator.clipboard) navigator.clipboard.writeText(texto).then(() => alert('¡Pronóstico copiado!'));
+    }
+
+    // ---------------- Histórico acumulado ----------------
+    const MESES = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+    function resumenPicks(picks) { let n = 0, w = 0, st = 0, net = 0; picks.forEach(p => { n++; st += p.stake; if (p.acertado) { w++; net += p.stake * (p.cuota - 1); } else net -= p.stake; }); return { n, w, st, net, roi: st ? net / st * 100 : 0 }; }
+    function serie(picks) { let acc = 0; const s = [0]; picks.slice().sort((a, b) => (a.fecha || '').localeCompare(b.fecha || '')).forEach(p => { acc += p.acertado ? p.stake * (p.cuota - 1) : -p.stake; s.push(Math.round(acc * 100) / 100); }); return s; }
+    function renderizarHistorico(picks) {
+      const cont = document.getElementById('histContenido');
+      if (!picks.length) { cont.innerHTML = '<div class="p-6 text-center text-xs text-slate-400">Aún no hay picks liquidadas con cuotas reales. Se irá llenando a medida que terminen los partidos.</div>'; return; }
+      const grupos = [['TG', 'Telegram', '#00f59b'], ['CONTROL', 'Control', '#94a3b8'], ['COMBI', 'Combinadas', '#a78bfa']].filter(g => g[0] !== 'COMBI' || picks.some(p => p.grupo === 'COMBI'));
+      const caja = (g) => { const r = resumenPicks(picks.filter(p => p.grupo === g[0])); return `<div class="p-3 rounded-2xl bg-brand-card border border-brand-border"><span class="text-[10px] font-bold uppercase block" style="color:${g[2]}">${g[1]}</span><span class="text-base font-extrabold font-mono block ${r.net >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${fmtU(r.net)}</span><span class="text-[10px] text-slate-400 font-mono block">ROI ${fmtPct(r.roi)} · ${r.w}V-${r.n - r.w}D</span></div>`; };
+      const lineas = grupos.map(g => `<path d="${trazo(serie(picks.filter(p => p.grupo === g[0])), 40)}" fill="none" stroke="${g[2]}" stroke-width="1.6" stroke-linecap="round"/>`).join('');
+      const meses = {};
+      picks.forEach(p => { (meses[p.mes || 'S/D'] = meses[p.mes || 'S/D'] || []).push(p); });
+      const filas = Object.keys(meses).sort().reverse().map(m => { const [y, mm] = m.split('-'); return `<tr class="border-t border-slate-800/80"><td class="py-1.5 text-slate-300">${mm ? MESES[parseInt(mm, 10) - 1] + ' ' + y : m}</td>${grupos.map(g => { const r = resumenPicks(meses[m].filter(p => p.grupo === g[0])); return `<td class="text-right ${r.net >= 0 ? 'text-emerald-400' : 'text-rose-400'}">${r.n ? fmtU(r.net) : '--'}<span class="text-slate-500"> (${r.n})</span></td>`; }).join('')}</tr>`; }).join('');
+      cont.innerHTML = `<div class="grid grid-cols-${grupos.length} gap-2">${grupos.map(caja).join('')}</div>
+        <div class="p-3 rounded-2xl bg-brand-card border border-brand-border"><span class="text-[10px] font-bold uppercase text-slate-400 block mb-1.5">Beneficio acumulado</span><div class="h-20 bg-slate-900/80 rounded-xl p-1"><svg class="w-full h-full overflow-visible" viewBox="0 0 100 40" preserveAspectRatio="none">${lineas}</svg></div></div>
+        <div class="p-3 rounded-2xl bg-brand-card border border-brand-border"><table class="w-full text-[11px] font-mono"><thead><tr class="text-[9px] uppercase text-slate-500"><th class="text-left">Mes</th>${grupos.map(g => `<th class="text-right">${g[1]}</th>`).join('')}</tr></thead><tbody>${filas}</tbody></table></div>
+        ${picks.length < 50 ? `<div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[10px] text-amber-300">Muestra pequeña (${picks.length} picks): con menos de ~50 picks el resultado es sobre todo azar.</div>` : ''}`;
+    }
+    async function abrirHistorico() {
+      const m = document.getElementById('modalHist'); m.classList.remove('hidden'); m.classList.add('flex');
+      document.getElementById('histContenido').innerHTML = '<div class="p-6 text-center text-xs text-slate-400">Cargando histórico...</div>';
+      try { const r = await fetch('historico_picks.json?t=' + Date.now()); if (!r.ok) throw 0; renderizarHistorico((await r.json()).picks || []); } catch (e) { renderizarHistorico([]); }
+    }
+    function cerrarHistorico() { const m = document.getElementById('modalHist'); m.classList.add('hidden'); m.classList.remove('flex'); }
+
+    if ('serviceWorker' in navigator) window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
+
+    document.addEventListener('DOMContentLoaded', () => {
+      document.getElementById('tgBanner').href = 'https://t.me/' + TG_CANAL;
+      document.getElementById('tgNombre').innerText = '@' + TG_CANAL;
+      pintarFiltros(); pintarPestanas();
+      const t0 = Date.now();
+      const ocultar = () => { const sp = document.getElementById('splash'); if (!sp) return; sp.style.opacity = '0'; setTimeout(() => sp.remove(), 600); };
+      const esperar = (fn, ini = Date.now()) => (typeof tailwind !== 'undefined' || Date.now() - ini > 3000) ? fn() : setTimeout(() => esperar(fn, ini), 100);
+      setTimeout(ocultar, 5000);
+      cargarDatos().finally(() => setTimeout(() => esperar(ocultar), Math.max(0, 2000 - (Date.now() - t0))));
+      document.querySelectorAll('.tab-btn').forEach(b => b.addEventListener('click', () => { state.activeTab = b.dataset.tab; pintarPestanas(); renderizar(); }));
+      document.getElementById('btnRefresh').addEventListener('click', () => { const i = document.querySelector('#btnRefresh svg'); i.classList.add('animate-spin'); cargarDatos().finally(() => setTimeout(() => i.classList.remove('animate-spin'), 600)); });
+      document.getElementById('btnHist').addEventListener('click', abrirHistorico);
+      document.getElementById('btnCerrarHist').addEventListener('click', cerrarHistorico);
+      document.getElementById('modalHist').addEventListener('click', e => { if (e.target.id === 'modalHist') cerrarHistorico(); });
+      document.getElementById('btnOled').addEventListener('click', () => document.body.classList.toggle('bg-black'));
+      setInterval(cargarDatos, 20000);
+    });
+  </script>
+
+  <!-- MODO APAISADO (móvil girado, tablet, pantalla del coche): dos columnas a partir de 600 px -->
+  <style id="aq-apaisado">
+    .aq-izq > * + *, .aq-der > * + * { margin-top: 1rem; }
+    @media (min-width: 600px) {
+      .aq-cont { max-width: none !important; display: grid; grid-template-columns: minmax(270px, 36%) minmax(0, 1fr); column-gap: 1.25rem; align-items: start; }
+      .aq-cont > * { margin-top: 0 !important; }
+      .aq-cont > header { grid-column: 1 / -1; margin-bottom: .75rem; }
+      .aq-izq, .aq-der { min-width: 0; }
+      .aq-izq { position: sticky; top: .75rem; max-height: calc(100dvh - 1.5rem); overflow-y: auto; padding-bottom: 1rem; scrollbar-width: none; }
+      .aq-izq::-webkit-scrollbar { display: none; }
+      #modalHist > div { max-width: 44rem; }
+    }
+    @media (min-width: 1000px) {
+      #matchesContainer { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .75rem; align-items: start; }
+      #matchesContainer > * { margin-top: 0 !important; }
+      #matchesContainer > :only-child { grid-column: 1 / -1; }
+    }
+  </style>
+  <script>
+    (function () {
+      var cont = document.querySelector('body > div.max-w-md.mx-auto');
+      var corte = document.getElementById('tabHoy');
+      if (!cont || !corte) return;
+      while (corte && corte.parentElement !== cont) corte = corte.parentElement;
+      if (!corte) return;
+      var izq = document.createElement('div'); izq.className = 'aq-izq';
+      var der = document.createElement('div'); der.className = 'aq-der';
+      var aDer = false;
+      Array.prototype.slice.call(cont.children).forEach(function (h) {
+        if (h.tagName === 'HEADER') return;
+        if (h === corte) aDer = true;
+        (aDer ? der : izq).appendChild(h);
+      });
+      cont.appendChild(izq); cont.appendChild(der);
+      cont.classList.add('aq-cont');
+    })();
+  </script>
+</body>
+</html>

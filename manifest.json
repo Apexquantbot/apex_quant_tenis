@@ -1,0 +1,19 @@
+{
+  "id": "/apex_quant_tenis/",
+  "name": "Apex Quant Tenis",
+  "short_name": "ApexTenis",
+  "description": "Pronósticos cuantitativos +EV de tenis: ATP y WTA",
+  "lang": "es",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#070e1d",
+  "theme_color": "#0c1322",
+  "categories": ["sports"],
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
