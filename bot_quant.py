@@ -13,7 +13,7 @@ import requests
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 
-VERSION = "1.2"
+VERSION = "1.3"
 
 # ==============================================================================
 # APEX QUANT TENIS
@@ -477,9 +477,7 @@ def espn_partidos_dia(espn_tour, fecha_yyyymmdd, mapa_sup):
                         ganador = 1 if s1 > s2 else (2 if s2 > s1 else None)
                     nt = " ".join(_tokens(torneo))
                     bo = 5 if (tour == "ATP" and any(x in nt for x in GRAND_SLAMS)) else 3
-                    per = ((comp.get("format") or {}).get("regulation") or {}).get("periods")
-                    if _int_o_none(per) in (3, 5):
-                        bo = _int_o_none(per)
+                    # Ojo: ESPN pone "periods": 5 en todos los partidos ATP (columnas del marcador), no es el formato real
                     salida.append({
                         "id": f"te{comp.get('id')}",
                         "utcDate": comp.get("date") or comp.get("startDate") or ev.get("date") or "",
@@ -943,6 +941,11 @@ def resultado_tupla(info):
         return None
     return (sum(a for a, _ in sets), sum(b for _, b in sets),
             sum(1 for a, b in sets if a > b), sum(1 for a, b in sets if b > a))
+
+
+def sets_imposible(spec, bo):
+    """Línea de sets que no tiene sentido para el formato (p. ej. Menos de 4.5 sets en un partido al mejor de 3)."""
+    return bool(spec) and spec.get("t") == "SETS" and spec.get("l") is not None and spec["l"] > bo
 
 
 def resolver_seleccion(spec, info):
@@ -1565,7 +1568,7 @@ def ejecutar_ciclo():
         s1 = sum(1 for a, b in sets if a > b) if sets else None
         s2 = sum(1 for a, b in sets if b > a) if sets else None
 
-        info = {"id": m["id"], "partido": partido_nombre, "local": j1, "visitante": j2, "estado": estado,
+        info = {"id": m["id"], "partido": partido_nombre, "local": j1, "visitante": j2, "estado": estado, "bo": m.get("bo", 3),
                 "sets": sets, "retirada": m.get("retirada"), "marcador": marcador, "goles_local": s1, "goles_visitante": s2}
         mapa_por_id[str(m["id"])] = info
         if fecha_p < lunes_semana_str:
@@ -1604,8 +1607,10 @@ def ejecutar_ciclo():
                 analisis = None
 
         acertado_p, push_p, ya_registrada, id_alerta = None, False, False, None
+        if analisis and sets_imposible(analisis.get("sel"), m.get("bo", 3)):
+            analisis["nota_correccion"] = "Anulado: el partido es al mejor de 3 sets"
         if analisis:
-            res = resolver_seleccion(analisis.get("sel"), info)
+            res = "PUSH" if analisis.get("nota_correccion") else resolver_seleccion(analisis.get("sel"), info)
             if res == "PUSH":
                 push_p = True
             elif res is True or res is False:
@@ -1677,7 +1682,8 @@ def ejecutar_ciclo():
             "cuota_minima": g("cuota_minima"), "solo_modelo": g("solo_modelo"), "push": push_p,
             "prob_mercado": g("prob_mercado"), "prob_estadistica": g("prob_estadistica"),
             "confirmado_stats": g("confirmado_stats"), "xg_local": g("xg_local"), "xg_visitante": g("xg_visitante"),
-            "tiene_pronostico": tp, "analizado": analizado, "nota_cuotas": nota_cuotas, "fav": fav_info,
+            "tiene_pronostico": tp, "analizado": analizado,
+            "nota_cuotas": (analisis.get("nota_correccion") if tp and analisis.get("nota_correccion") else nota_cuotas), "fav": fav_info,
             "semana_id": semana_actual_id,
             "telegram_enviado": bool(enviado or ya_registrada or (prev and prev.get("telegram_enviado"))),
             "acertado": acertado_p, "form_info": form_info, "prevision": prevision})
@@ -1703,6 +1709,20 @@ def ejecutar_ciclo():
                 enviar_telegram(mensaje_combinada(ac), url_accion=APP_URL)
                 alertas.append(ac)
                 print(f"🎯 Combinada creada: {ac['mercado']} {ac['cuota']}")
+
+    # CORRECCIÓN: alertas de sets con línea imposible (v1.2 trataba las Finales ATP como al mejor de 5)
+    for a in alertas:
+        info = mapa_por_id.get(str(a.get("id_partido", "")))
+        if a.get("corregida_bo") or a.get("es_combinada") or not info or not sets_imposible(a.get("sel"), info.get("bo", 3)):
+            continue
+        estaba_liquidada = a.get("liquidada_telegram")
+        a.update({"finalizado": True, "acertado": None, "push": True, "liquidada_telegram": True, "corregida_bo": True,
+                  "marcador_final": (info.get("marcador") or "") + " (anulada: partido al mejor de 3)"})
+        enviar_telegram(f"⚠️ <b>CORRECCIÓN</b>\n🎾 <b>{a['partido']}</b>\n📌 <b>Pronóstico:</b> {a['mercado']}\n\n"
+                        f"↩️ Queda <b>ANULADO</b>: el partido se juega al mejor de 3 sets y el bot lo calculó como si fuera al mejor de 5."
+                        + (" No cuenta como acertado." if estaba_liquidada else "") + "\n\n⚡ <i>Apex Quant Engine</i>",
+                        url_accion=APP_URL, texto_boton="📱 Ver en la Web App")
+        print(f"↩️ Alerta corregida (formato): {a['partido']} - {a['mercado']}")
 
     # LIQUIDACIÓN
     liquidar_combinadas(alertas, mapa_por_id)
