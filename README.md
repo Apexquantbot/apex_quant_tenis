@@ -1,7 +1,7 @@
 # Apex Quant Tenis
 
 Versión de Apex Quant para tenis: circuitos **ATP y WTA** (individuales).
-Misma estructura, estilo y funcionamiento que Apex Quant fútbol y baloncesto. Se ve dentro de **Apex Quant Deportes** (pestaña 🎾).
+Misma estructura, estilo y funcionamiento que Apex Quant fútbol y basket. Se ve dentro de **Apex Quant Deportes** (pestaña 🎾).
 
 - Web / app: https://apexquantbot.github.io/apex_quant_tenis/
 - Canal de Telegram: https://t.me/apex_quant_tenis
@@ -36,9 +36,9 @@ Misma estructura, estilo y funcionamiento que Apex Quant fútbol y baloncesto. S
 
 | Nombre | Obligatorio | Valor |
 |---|---|---|
-| `TELEGRAM_BOT_TOKEN` | Sí | Token del bot de Telegram (puede ser el mismo bot del baloncesto) |
+| `TELEGRAM_BOT_TOKEN` | Sí | Token del bot de Telegram (puede ser el mismo bot del basket) |
 | `TELEGRAM_CHAT_ID` | Sí | `@apex_quant_tenis` (o el nombre del canal que crees) |
-| `THE_ODDS_API_KEY` | Recomendado | Clave de The Odds API (mejor una propia, distinta de la de fútbol y baloncesto) |
+| `THE_ODDS_API_KEY` | Recomendado | Clave de The Odds API (mejor una propia, distinta de la de fútbol y basket) |
 
 ## Lanzamiento cada 15 minutos (cron-job.org)
 

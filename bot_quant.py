@@ -17,7 +17,7 @@ VERSION = "1.4"
 
 # ==============================================================================
 # APEX QUANT TENIS
-# Misma arquitectura que Apex Quant fútbol y baloncesto: calendario y resultados
+# Misma arquitectura que Apex Quant fútbol y basket: calendario y resultados
 # gratuitos (ESPN), cuotas reales (The Odds API) frente al consenso del mercado y
 # un modelo estadístico propio:
 #   1) Elo de cada jugador/a, general y por superficie (pista dura, tierra, hierba),
@@ -1203,7 +1203,7 @@ def enviar_telegram(mensaje, url_accion=None, texto_boton="📱 Abrir en Web App
 
 
 # ==============================================================================
-# SEMANAS, HISTÓRICOS Y RESÚMENES (igual que fútbol y baloncesto)
+# SEMANAS, HISTÓRICOS Y RESÚMENES (igual que fútbol y basket)
 # ==============================================================================
 def cargar_datos_existentes():
     if os.path.exists("datos.json"):
