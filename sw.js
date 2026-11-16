@@ -1,7 +1,7 @@
-// Service Worker PWA - Apex Quant Tenis v1.0
+// Service Worker PWA - Apex Quant Tenis v1.1
 // - Solo intercepta recursos del propio sitio (CDN, fuentes y banderas pasan directos).
 // - La clave de caché ignora la query (?t=...): datos.json ocupa UNA sola entrada.
-const CACHE_NAME = 'apex-quant-tenis-v1.0';
+const CACHE_NAME = 'apex-quant-tenis-v1.1';
 const SHELL = ['./', './index.html', './manifest.json', './icon-192.png', './icon-512.png'];
 const MAX_ENTRADAS = 30;
 

@@ -13,7 +13,7 @@ import requests
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 
-VERSION = "1.1"
+VERSION = "1.2"
 
 # ==============================================================================
 # APEX QUANT TENIS
@@ -69,7 +69,7 @@ PROB_MINIMA = float(os.getenv("ODDS_MIN_PROB", "0.40"))
 PERFILES_MERCADOS = {"reducido": "h2h,spreads,totals", "basico": "h2h", "medio": "h2h,totals", "completo": "h2h,spreads,totals"}
 ODDS_PERFIL = os.getenv("ODDS_PERFIL", "reducido")
 ODDS_MARKETS_FORZADOS = os.getenv("ODDS_MARKETS", "")
-MERCADOS_ACTIVOS = {m.strip().upper() for m in os.getenv("MERCADOS_ACTIVOS", "ML,HC,TOT").split(",") if m.strip()}
+MERCADOS_ACTIVOS = {m.strip().upper() for m in os.getenv("MERCADOS_ACTIVOS", "ML,HC,TOT,SETS,SET1").split(",") if m.strip()}
 ODDS_DIA_RESET = int(os.getenv("ODDS_DIA_RESET", "1"))
 ODDS_FACTOR_PRESUPUESTO = float(os.getenv("ODDS_FACTOR_PRESUPUESTO", "1.25"))
 
@@ -86,6 +86,8 @@ VENTANA_MAX = 90
 MODELO_SOLO_ACTIVO = os.getenv("MODELO_SOLO_ACTIVO", "1") == "1"
 MODELO_SOLO_PROB_MIN = float(os.getenv("MODELO_SOLO_PROB_MIN", "0.70"))
 MODELO_SOLO_MARGEN = 1.05
+MODELO_SOLO_MAX_DIA = int(os.getenv("MODELO_SOLO_MAX_DIA", "6"))   # tope de alertas solo-modelo por día (no saturar el canal)
+MODELO_SOLO_CUOTA_MIN = float(os.getenv("MODELO_SOLO_CUOTA_MIN", "1.25"))   # no proponer picks con cuota mínima ridícula
 
 STATS_PESO_MERCADO = float(os.getenv("STATS_PESO_MERCADO", "0.65"))
 STATS_OBLIGATORIAS = os.getenv("STATS_OBLIGATORIAS", "1") == "1"
@@ -848,7 +850,12 @@ def calcular_modelo(m, elo, cache):
     juegos = sum(x[0] + x[1] for x in M) / n
     dif = sum(x[0] - x[1] for x in M) / n
     p1 = sum(1 for x in M if x[2] > x[3]) / n
-    modelo = {"muestras": M, "elo_1": round(ra), "elo_2": round(rb), "prob_1": p1,
+    set_1 = sum(1 for x in M if x[2] >= 1) / n
+    set_2 = sum(1 for x in M if x[3] >= 1) / n
+    dist = {}
+    for x in M:
+        dist[x[2] + x[3]] = dist.get(x[2] + x[3], 0) + 1
+    modelo = {"set_1": set_1, "set_2": set_2, "dist_sets": {k: v / n for k, v in sorted(dist.items())},"muestras": M, "elo_1": round(ra), "elo_2": round(rb), "prob_1": p1,
               "juegos": round(juegos, 1), "dif_juegos": round(dif, 1),
               "saque_1": round(pa * 100, 1), "saque_2": round(pb * 100, 1)}
     cache[clave] = modelo
@@ -870,6 +877,10 @@ def pred_win(spec):
         if spec["team"] == "L":
             return lambda r: (r[0] + l - r[1]) > 0
         return lambda r: (r[1] + l - r[0]) > 0
+    if t == "SETS":
+        return (lambda r: r[2] + r[3] > l) if s == "O" else (lambda r: r[2] + r[3] < l)
+    if t == "SET1":
+        return (lambda r: r[2] >= 1) if spec["team"] == "L" else (lambda r: r[3] >= 1)
     return lambda r: False
 
 
@@ -904,17 +915,24 @@ def describir_sel(spec, j1, j2):
         return f"Más de {l:g} juegos (Over {l:g})" if s == "O" else f"Menos de {l:g} juegos (Under {l:g})"
     if t == "HC":
         return f"Hándicap juegos {j1 if spec['team'] == 'L' else j2} {l:+g}"
+    if t == "SETS":
+        if l == 2.5:
+            return "Partido a 3 sets (Más de 2.5 sets)" if s == "O" else "Se decide en 2 sets (Menos de 2.5 sets)"
+        return f"Más de {l:g} sets" if s == "O" else f"Menos de {l:g} sets"
+    if t == "SET1":
+        return f"{j1 if spec['team'] == 'L' else j2} gana al menos un set"
     return str(spec)
 
 
 def tipo_y_categoria(spec):
-    return {"ML": ("GANADOR", "ganador"), "HC": ("HANDICAP", "handicap"), "TOT": ("JUEGOS", "juegos")}.get(spec["t"], ("GANADOR", "ganador"))
+    return {"ML": ("GANADOR", "ganador"), "HC": ("HANDICAP", "handicap"), "TOT": ("JUEGOS", "juegos"),
+            "SETS": ("SETS", "sets"), "SET1": ("SET", "set")}.get(spec["t"], ("GANADOR", "ganador"))
 
 
 def jugador_de_sel(spec, j1, j2):
     if spec["t"] == "ML":
         return j1 if spec["s"] == "1" else j2
-    if spec["t"] == "HC":
+    if spec["t"] in ("HC", "SET1"):
         return j1 if spec["team"] == "L" else j2
     return None
 
@@ -1050,21 +1068,41 @@ def _extras_modelo(modelo):
     return {"xg_local": modelo["elo_1"], "xg_visitante": modelo["elo_2"]}
 
 
+def candidatos_modelo(modelo, bo):
+    """Mercados que se pueden pronosticar solo con el modelo: ganador, gana al menos un set y número de sets."""
+    M = modelo["muestras"]
+    n = len(M)
+    p1 = modelo["prob_1"]
+    out = [({"t": "ML", "s": "1"}, p1), ({"t": "ML", "s": "2"}, 1 - p1),
+           ({"t": "SET1", "team": "L"}, modelo["set_1"]), ({"t": "SET1", "team": "V"}, modelo["set_2"])]
+    for l in ((2.5,) if bo != 5 else (3.5, 4.5)):
+        po = sum(1 for r in M if r[2] + r[3] > l) / n
+        out += [({"t": "SETS", "s": "O", "l": l}, po), ({"t": "SETS", "s": "U", "l": l}, 1 - po)]
+    return out
+
+
 def analizar_solo_modelo(m, modelo, motivo):
     j1, j2 = m["p1"]["name"], m["p2"]["name"]
     if not modelo:
         return None, True, "Sin datos suficientes de algún jugador/a para el modelo"
     p1 = modelo["prob_1"]
-    s = "1" if p1 >= 0.5 else "2"
-    p = p1 if s == "1" else 1 - p1
     nota = (f"Modelo: {round(p1 * 100)}% - {round((1 - p1) * 100)}% · {modelo['juegos']:g} juegos esperados "
             f"(Elo {modelo['elo_1']} vs {modelo['elo_2']})")
-    if not MODELO_SOLO_ACTIVO or p < MODELO_SOLO_PROB_MIN:
-        return None, True, f"{motivo}. Sin favorito claro para el modelo ({round(p * 100)}%). {nota}"
-    spec = {"t": "ML", "s": s}
+    validos = []
+    for spec, p in candidatos_modelo(modelo, m.get("bo", 3)):
+        if spec["t"] not in MERCADOS_ACTIVOS or p < MODELO_SOLO_PROB_MIN:
+            continue
+        cuota = round(MODELO_SOLO_MARGEN / p, 2)
+        if cuota < MODELO_SOLO_CUOTA_MIN:
+            continue   # demasiado obvio: ninguna casa paga una cuota con valor
+        validos.append((cuota, spec, p))
+    if not MODELO_SOLO_ACTIVO or not validos:
+        pmax = max(p1, 1 - p1)
+        return None, True, f"{motivo}. Sin pronóstico claro para el modelo (favorito {round(pmax * 100)}%). {nota}"
+    cuota, spec, p = max(validos, key=lambda x: x[0])   # el de más cuota (más valor) entre los que superan el 70 %
     tipo, cat = tipo_y_categoria(spec)
     a = {"mercado": describir_sel(spec, j1, j2), "tipo_mercado": tipo, "categoria_visual": cat, "sel": spec,
-         "equipo_pronosticado": jugador_de_sel(spec, j1, j2), "cuota": round(MODELO_SOLO_MARGEN / p, 2),
+         "equipo_pronosticado": jugador_de_sel(spec, j1, j2), "cuota": cuota,
          "cuota_ref": None, "cuota_minima": True, "solo_modelo": True, "prob_modelo": f"{round(p * 100, 1)}%",
          "ev": round((MODELO_SOLO_MARGEN - 1) * 100, 1), "stake": 1, "prob_mercado": None,
          "prob_estadistica": round(p * 100, 1), "confirmado_stats": True, "n_casas": None, "casa": None,
@@ -1101,6 +1139,14 @@ def analizar_partido(m, inicio_utc, elo, cache_modelos, cache_odds):
     elif cands:
         mejor = max(cands, key=lambda c: (c["confirmado_stats"], c["score"]))
     else:
+        mejor = None
+    if not alertables and modelo is not None:
+        # Las casas de The Odds API no ofrecen mercados de sets: si no hay valor en ganador/juegos/hándicap,
+        # se prueba un pronóstico del modelo en sets (o ganador) con cuota mínima
+        a_mod, _, n_mod = analizar_solo_modelo(m, modelo, "Sin valor en las cuotas de ganador, juegos y hándicap")
+        if a_mod:
+            return a_mod, True, n_mod, fav
+    if mejor is None:
         return None, True, nota, fav
     mejor.update(_extras_modelo(modelo))
     if modelo is None:
@@ -1540,7 +1586,9 @@ def ejecutar_ciclo():
                     prevision = {"prob_local": round(mod["prob_1"] * 100, 1), "prob_visitante": round(100 - round(mod["prob_1"] * 100, 1), 1),
                                  "juegos": mod["juegos"], "dif_juegos": mod["dif_juegos"],
                                  "elo_local": mod["elo_1"], "elo_visitante": mod["elo_2"],
-                                 "saque_local": mod["saque_1"], "saque_visitante": mod["saque_2"]}
+                                 "saque_local": mod["saque_1"], "saque_visitante": mod["saque_2"],
+                                 "set_local": round(mod["set_1"] * 100, 1), "set_visitante": round(mod["set_2"] * 100, 1),
+                                 "sets": {str(k): round(v * 100, 1) for k, v in mod["dist_sets"].items()}}
             except Exception as e:
                 print(f"   Aviso previsión {partido_nombre}: {e}")
 
@@ -1566,7 +1614,9 @@ def ejecutar_ciclo():
             ya_registrada = any(a.get("id_alerta") == id_alerta for a in alertas)
 
         enviado = False
-        if analisis_nuevo and es_alertable(analisis) and not ya_registrada:
+        tope_modelo = bool(analisis and analisis.get("solo_modelo")) and sum(
+            1 for x in alertas if x.get("solo_modelo") and x.get("fecha") == fecha_p) >= MODELO_SOLO_MAX_DIA
+        if analisis_nuevo and es_alertable(analisis) and not ya_registrada and not tope_modelo:
             enviado = True
             sup_txt = NOMBRE_SUPERFICIE.get(m.get("superficie"), "")
             if analisis.get("solo_modelo"):

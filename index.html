@@ -176,7 +176,7 @@
     // ---------------------------------------------------------------
     const TG_CANAL = 'apex_quant_tenis';
     const WEB_URL = 'https://apexquantbot.github.io/apex_quant_tenis/';
-    const VERSION_WEB = '1.0';
+    const VERSION_WEB = '1.1';
 
     const SUPERFICIES = {
       Hard:  { txt: 'Pista dura', cls: 'bg-sky-500/15 text-sky-300 border-sky-500/30', ico: '🔵' },
@@ -211,6 +211,8 @@
     function tarjetaMercado(tipo) {
       tipo = (tipo || '').toUpperCase();
       if (tipo === 'HANDICAP') return { txt: '⚖️ HÁNDICAP JUEGOS', cls: 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/40' };
+      if (tipo === 'SETS') return { txt: '🔢 NÚMERO DE SETS', cls: 'bg-amber-500/20 text-amber-300 border border-amber-500/40' };
+      if (tipo === 'SET') return { txt: '🎾 GANA UN SET', cls: 'bg-fuchsia-500/20 text-fuchsia-300 border border-fuchsia-500/40' };
       if (tipo === 'JUEGOS') return { txt: '🎯 TOTAL JUEGOS', cls: 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/40' };
       return { txt: '🏆 VICTORIA', cls: 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/40' };
     }
@@ -220,7 +222,9 @@
       if (!v) return '<div class="text-[10px] text-slate-500">📐 Modelo: faltan partidos registrados de algún jugador/a</div>';
       return `<div class="text-[10px] text-slate-400 space-y-0.5">
         <div>📐 Previsión: <span class="text-slate-200 font-semibold">${v.prob_local}% - ${v.prob_visitante}%</span> · ${v.juegos} juegos esperados</div>
-        <div>Elo (superficie): ${v.elo_local} vs ${v.elo_visitante} · puntos ganados al saque ${v.saque_local}% / ${v.saque_visitante}%</div></div>`;
+        <div>Elo (superficie): ${v.elo_local} vs ${v.elo_visitante} · puntos ganados al saque ${v.saque_local}% / ${v.saque_visitante}%</div>
+        ${v.sets ? `<div>Sets: ${Object.entries(v.sets).map(([k, x]) => `${k} sets ${x}%`).join(' · ')}</div>` : ''}
+        ${v.set_local != null ? `<div>Gana al menos un set: ${esc(p.local)} ${v.set_local}% · ${esc(p.visitante)} ${v.set_visitante}%</div>` : ''}</div>`;
     }
 
     function esDeLaSemanaActual(item) {
