@@ -17,7 +17,7 @@ Misma estructura, estilo y funcionamiento que Apex Quant fútbol y baloncesto. S
 
 **Fuentes de datos (gratis):**
 - Calendario, directo y resultados: ESPN.
-- Histórico para arrancar el modelo: Jeff Sackmann (tennis_atp y tennis_wta en GitHub). Se descarga una sola vez.
+- Histórico para arrancar el modelo: ESPN, último año (los históricos de Jeff Sackmann se retiraron de GitHub en noviembre de 2026; si vuelven, el bot los usa solo).
 - Cuotas: The Odds API (cubre los torneos grandes: Grand Slams, Masters 1000, WTA 1000, Finals…).
 
 **Modelo:**

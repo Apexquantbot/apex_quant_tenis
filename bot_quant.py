@@ -13,7 +13,7 @@ import requests
 from datetime import datetime, timezone, timedelta
 from zoneinfo import ZoneInfo
 
-VERSION = "1.0"
+VERSION = "1.1"
 
 # ==============================================================================
 # APEX QUANT TENIS
@@ -327,7 +327,7 @@ HTTP_HEADERS = {"User-Agent": "Mozilla/5.0 (ApexQuantTenis; +https://apexquantbo
 DIAG_FUENTES = {"espn_ok": 0, "espn_error": 0, "por_tour": {}, "sackmann": {}, "muestras": []}
 INICIO_CICLO = time.time()
 TIEMPO_MAX_DESCARGAS = float(os.getenv("TIEMPO_MAX_DESCARGAS", "540"))
-RELLENO_DIAS_CICLO = int(os.getenv("RELLENO_DIAS_CICLO", "40"))
+RELLENO_DIAS_CICLO = int(os.getenv("RELLENO_DIAS_CICLO", "90"))
 ESTADOS_CERRADOS = ("FINISHED", "CANCELLED", "POSTPONED")
 
 TIERRA = ("roland garros", "french open", "monte carlo", "monte-carlo", "madrid", "internazionali", "italian open", "rome",
@@ -653,8 +653,10 @@ def sembrar_con_sackmann(elo, hoy):
                     continue
             print(f"   📚 Sackmann {tour} {y}: descargado")
     if not filas:
-        print("   ⚠️ No se pudo descargar el histórico de Sackmann; se reintenta en el siguiente ciclo")
-        if est["intentos_semilla"] >= 3:
+        estados = list(DIAG_FUENTES["sackmann"].values())
+        retirado = bool(estados) and all(e == 404 for e in estados)   # repos retirados de GitHub (nov. 2026)
+        print("   ⚠️ No se pudo descargar el histórico de Sackmann" + (" (ya no existe)" if retirado else "; se reintenta en el siguiente ciclo"))
+        if retirado or est["intentos_semilla"] >= 3:
             est["semilla"] = "hecha"
             est["inicio_espn"] = (hoy - timedelta(days=365)).isoformat()
             print("   ➡️ Tras 3 intentos se construye el Elo solo con ESPN (último año)")
