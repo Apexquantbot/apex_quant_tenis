@@ -176,7 +176,7 @@
     // ---------------------------------------------------------------
     const TG_CANAL = 'apex_quant_tenis';
     const WEB_URL = 'https://apexquantbot.github.io/apex_quant_tenis/';
-    const VERSION_WEB = '1.2';
+    const VERSION_WEB = '1.3';
 
     const SUPERFICIES = {
       Hard:  { txt: 'Pista dura', cls: 'bg-sky-500/15 text-sky-300 border-sky-500/30', ico: '🔵' },
@@ -536,17 +536,38 @@
       const lineas = grupos.map(g => `<path d="${trazo(serie(picks.filter(p => p.grupo === g[0])), 40)}" fill="none" stroke="${g[2]}" stroke-width="1.6" stroke-linecap="round"/>`).join('');
       const meses = {};
       picks.forEach(p => { const m = p.mes || 'S/D', sk = p.semana_id || 'S/D'; const o = (meses[m] = meses[m] || { total: [], semanas: {} }); o.total.push(p); (o.semanas[sk] = o.semanas[sk] || []).push(p); });
-      const celda = (lista, g, cls) => { const r = resumenPicks(lista.filter(p => p.grupo === g[0])); return `<td class="${cls} text-right">${r.n ? `<span class="text-white font-bold">${pctTxt(r)}</span> <span class="${colorNum(r.net)}">${fmtU(r.net)}</span>` : '--'}<span class="text-slate-500"> (${r.n})</span></td>`; };
+      // Vista por mes en bloques (en el móvil la tabla quedaba apelotonada):
+      // arriba el mes y su total (sin Control); debajo, una casilla por grupo con % de acierto, unidades y picks
+      const totalDe = (lista) => resumenPicks(lista.filter(p => p.grupo !== 'CONTROL'));
+      const casillas = (lista, pequeno) => `<div class="grid gap-1.5 mt-1.5" style="grid-template-columns:repeat(${grupos.length},minmax(0,1fr))">${grupos.map(g => {
+          const r = resumenPicks(lista.filter(p => p.grupo === g[0]));
+          return `<div class="rounded-lg bg-slate-900/70 border border-slate-800 px-1.5 ${pequeno ? 'py-1' : 'py-1.5'} text-center min-w-0">
+            <div class="flex items-center justify-center gap-1 text-[8px] uppercase tracking-wide text-slate-500 font-bold"><span class="w-1.5 h-1.5 rounded-full shrink-0" style="background:${g[2]}"></span><span class="truncate">${g[1]}</span></div>
+            <div class="font-mono font-bold ${pequeno ? 'text-[11px]' : 'text-[12px]'} ${r.n ? colorNum(r.net) : 'text-slate-600'} leading-tight mt-0.5">${r.n ? (r.net >= 0 ? '+' : '') + r.net.toFixed(2) : '--'}</div>
+            <div class="font-mono text-[9px] text-slate-500 leading-tight">${r.n ? pctTxt(r) + ' · ' : ''}${r.n} pick${r.n === 1 ? '' : 's'}</div>
+          </div>`;
+        }).join('')}</div>`;
+      const cabecera = (izq, r, grande) => `<div class="flex items-center justify-between gap-2">
+          <div class="min-w-0">${izq}</div>
+          <div class="text-right shrink-0 font-mono"><span class="${grande ? 'text-[14px]' : 'text-[12px]'} font-extrabold ${r.n ? colorNum(r.net) : 'text-slate-500'}">${r.n ? fmtU(r.net) : '--'}</span><span class="text-[9px] text-slate-500"> (${r.n})</span></div>
+        </div>`;
       const filas = Object.keys(meses).sort().reverse().map(m => {
         const [y, mm] = m.split('-'); const nombre = mm ? MESES[parseInt(mm, 10) - 1] + ' ' + y : m;
         const sems = Object.keys(meses[m].semanas).sort().reverse(); const abierto = MESES_ABIERTOS.has(m);
+        const bloqueMes = `<div onclick="toggleMes('${m}')" class="pt-2.5 pb-2 border-t border-slate-800/80 first:border-t-0 cursor-pointer select-none active:bg-slate-800/30 rounded-lg">
+          ${cabecera(`<span class="inline-block w-3 text-brand-primary">${abierto ? '▾' : '▸'}</span><span class="text-[13px] font-bold text-white">${nombre}</span><span class="text-slate-500 text-[10px]"> · ${sems.length} sem.</span>`, totalDe(meses[m].total), true)}
+          ${casillas(meses[m].total, false)}
+        </div>`;
         const fs = abierto ? sems.map(sk => { const num = (/W(\d+)$/.exec(sk) || [])[1];
-          return `<tr class="text-[10px]"><td class="py-1 pl-4 text-slate-400 whitespace-nowrap">${num ? `S${parseInt(num, 10)} · ${rangoSemana(sk)}` : sk}</td>${grupos.map(g => celda(meses[m].semanas[sk], g, 'py-1')).join('')}</tr>`; }).join('') : '';
-        return `<tr onclick="toggleMes('${m}')" class="border-t border-slate-800/80 cursor-pointer select-none"><td class="py-1.5 text-slate-300 whitespace-nowrap"><span class="inline-block w-3 text-brand-primary text-[9px]">${abierto ? '▾' : '▸'}</span>${nombre}</td>${grupos.map(g => celda(meses[m].total, g, 'py-1.5')).join('')}</tr>${fs}`;
+          return `<div class="ml-3 pl-2.5 border-l-2 border-slate-700/70 py-1.5 mb-1">
+            ${cabecera(`<span class="text-[11px] text-slate-300 font-semibold">${num ? `S${parseInt(num, 10)} · ${rangoSemana(sk)}` : sk}</span>`, totalDe(meses[m].semanas[sk]), false)}
+            ${casillas(meses[m].semanas[sk], true)}
+          </div>`; }).join('') : '';
+        return bloqueMes + fs;
       }).join('');
       cont.innerHTML = `<div class="grid grid-cols-${grupos.length} gap-2">${grupos.map(caja).join('')}</div>
         <div class="p-3 rounded-2xl bg-brand-card border border-brand-border"><span class="text-[10px] font-bold uppercase text-slate-400 block mb-1.5">Beneficio acumulado</span><div class="h-20 bg-slate-900/80 rounded-xl p-1"><svg class="w-full h-full overflow-visible" viewBox="0 0 100 40" preserveAspectRatio="none">${lineas}</svg></div></div>
-        <div class="p-3 rounded-2xl bg-brand-card border border-brand-border"><span class="text-[10px] font-bold uppercase text-slate-400 block mb-1.5">Por mes · toca un mes para ver sus semanas</span><table class="w-full text-[11px] font-mono"><thead><tr class="text-[9px] uppercase text-slate-500"><th class="text-left">Mes</th>${grupos.map(g => `<th class="text-right">${g[1]}</th>`).join('')}</tr></thead><tbody>${filas}</tbody></table></div>
+        <div class="p-3 rounded-2xl bg-brand-card border border-brand-border"><span class="text-[10px] font-bold uppercase text-slate-400 block mb-1.5">Por mes · toca un mes para ver sus semanas</span><div>${filas}</div><p class="text-[9px] text-slate-500 mt-1.5">Total = pronósticos enviados (sin Control).</p></div>
         <div class="p-3 rounded-2xl bg-brand-card border border-brand-border"><span class="text-[10px] font-bold uppercase text-slate-400 block mb-1.5">Por mercado y por origen</span><table class="w-full text-[11px] font-mono"><tbody>${tipos.map(filaRes).join('')}${origen.length ? '<tr><td colspan="4" class="pt-2"></td></tr>' + origen.map(filaRes).join('') : ''}${rTot.n ? '<tr class="border-t-2 border-slate-600"><td class="py-1.5 text-white font-extrabold">Σ Total</td><td class="text-right text-white font-extrabold">' + pctTxt(rTot) + '</td><td class="text-right text-slate-300 font-bold">' + rTot.w + 'V-' + (rTot.n - rTot.w) + 'D</td><td class="text-right font-extrabold ' + colorNum(rTot.net) + '">' + fmtU(rTot.net) + '</td></tr>' : ''}</tbody></table></div>
         ${picks.length < 50 ? `<div class="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/30 text-[10px] text-amber-300">Muestra pequeña (${picks.length} pronósticos): con menos de ~50 el resultado es sobre todo azar.</div>` : ''}
         <p class="text-[9px] text-slate-500 leading-relaxed">Incluye los pronósticos con cuotas reales y los del modelo sin cuotas (calculados con su cuota mínima, así que el beneficio real puede ser algo mayor). Las apuestas anuladas (retirada, walkover) no cuentan.</p>`;
